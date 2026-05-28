@@ -221,7 +221,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Chart Card 1 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Proporsi Toko & Marketplace <span class="text-xs font-normal text-gray-400 ml-2">(Klik grafik untuk detail)</span></h3>
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Proporsi Toko & Marketplace <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Data Cocok & Manual)</span></h3>
                     <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4 cursor-pointer">
                         <canvas id="marketplaceChart"></canvas>
                     </div>
@@ -231,7 +231,7 @@
 
                 <!-- Chart Card 2 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman <span class="text-xs font-normal text-gray-400 ml-2">(Klik grafik untuk detail)</span></h3>
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Data Cocok & Manual)</span></h3>
                     <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4 cursor-pointer">
                         <canvas id="deliveryChart"></canvas>
                     </div>
@@ -718,11 +718,14 @@
 
             // --- Chart Logic ---
             const updateChart = (data) => {
+                // HANYA PROSES DATA YANG STATUSNYA COCOK & MANUAL (isMatch === true)
+                const matchedData = data.filter(d => d.isMatch);
+
                 const ctxStore = document.getElementById('marketplaceChart').getContext('2d');
                 const ctxDelivery = document.getElementById('deliveryChart').getContext('2d');
                 
                 const aggregateStore = (platform, store) => {
-                    const filtered = data.filter(d => platform === 'Online Manual' ? d.platform === 'Online Manual' : (d.platform === platform && d.store === store));
+                    const filtered = matchedData.filter(d => platform === 'Online Manual' ? d.platform === 'Online Manual' : (d.platform === platform && d.store === store));
                     return {
                         count: filtered.length,
                         nominal: filtered.reduce((sum, d) => sum + (d.numericNominal || 0), 0)
@@ -730,7 +733,7 @@
                 };
 
                 const aggregateDelivery = (category) => {
-                    const filtered = data.filter(d => d.deliveryCategory === category);
+                    const filtered = matchedData.filter(d => d.deliveryCategory === category);
                     return {
                         count: filtered.length,
                         nominal: filtered.reduce((sum, d) => sum + (d.numericNominal || 0), 0)
@@ -821,7 +824,7 @@
                             if (elements.length > 0) {
                                 const idx = elements[0].index;
                                 const label = chart.data.labels[idx];
-                                showModalDetail(label, 'store', data);
+                                showModalDetail(label, 'store', matchedData);
                             }
                         },
                         onHover: (event, chartElement) => {
@@ -855,7 +858,7 @@
                             if (elements.length > 0) {
                                 const idx = elements[0].index;
                                 const label = chart.data.labels[idx];
-                                showModalDetail(label, 'delivery', data);
+                                showModalDetail(label, 'delivery', matchedData);
                             }
                         },
                         onHover: (event, chartElement) => {
