@@ -14,10 +14,14 @@
     <!-- SheetJS (XLSX) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         /* Custom scrollbar for table */
         .table-container::-webkit-scrollbar {
             height: 8px;
+            width: 8px;
         }
         .table-container::-webkit-scrollbar-track {
             background: #f1f1f1; 
@@ -37,27 +41,27 @@
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 min-h-screen p-6">
 
-    <div class="max-w-6xl mx-auto space-y-6">
+    <div class="max-w-7xl mx-auto space-y-6">
         
         <!-- Header -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-4">
-                <div class="bg-blue-600 p-3 rounded-xl text-white">
-                    <i class="fas fa-chart-bar text-2xl"></i>
+                <div class="bg-blue-600 p-3 rounded-xl text-white shadow-md">
+                    <i class="fas fa-chart-pie text-2xl"></i>
                 </div>
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Analisa Penjualan AIO</h1>
-                    <p class="text-sm text-gray-500">Cocokkan data Shopee & Tokopedia dengan Data AIO secara otomatis.</p>
+                    <p class="text-sm text-gray-500">Cocokkan data Shopee, Tokopedia, dan Manual dengan Data AIO secara otomatis.</p>
                 </div>
             </div>
-            <button id="btn-reset" class="hidden-section flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors">
+            <button id="btn-reset" class="hidden-section flex items-center gap-2 px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors shadow-sm">
                 <i class="fas fa-sync-alt"></i> Mulai Ulang
             </button>
         </div>
 
         <!-- Error Message Container -->
-        <div id="error-container" class="hidden-section bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex items-center gap-3">
-            <i class="fas fa-exclamation-circle text-red-500"></i>
+        <div id="error-container" class="hidden-section bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex items-center gap-3 shadow-sm">
+            <i class="fas fa-exclamation-circle text-red-500 text-lg"></i>
             <p id="error-text" class="text-red-700 text-sm font-medium"></p>
         </div>
 
@@ -65,60 +69,60 @@
         <div id="upload-section" class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 
-                <!-- Data 1 -->
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-start gap-2 relative overflow-hidden transition-all hover:shadow-md">
+                <!-- Data 1: Shopee -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-orange-500 border-x border-b border-gray-100 flex flex-col items-start gap-2 relative overflow-hidden transition-all hover:shadow-md">
                     <div class="flex items-center gap-3 w-full">
-                        <div class="p-3 rounded-lg bg-blue-50 text-blue-500" id="icon-shopeeBali">
+                        <div class="p-3 rounded-lg bg-orange-50 text-orange-500" id="icon-shopeeBali">
                             <i class="fas fa-file-excel text-xl"></i>
                         </div>
                         <div class="flex-1">
-                            <h3 class="font-semibold text-gray-800">Data 1: Shopee</h3>
-                            <p class="text-xs text-gray-500">Bali Stationery</p>
+                            <h3 class="font-bold text-gray-800">Data 1: Shopee</h3>
+                            <p class="text-xs font-medium text-orange-600">Bali Stationery</p>
                         </div>
                     </div>
-                    <label class="mt-2 w-full cursor-pointer flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg border border-dashed border-gray-300 text-sm font-medium transition-colors">
+                    <label class="mt-2 w-full cursor-pointer flex items-center justify-center gap-2 bg-orange-50/50 hover:bg-orange-100 text-orange-700 py-2 rounded-lg border border-dashed border-orange-300 text-sm font-medium transition-colors">
                         <i class="fas fa-upload"></i>
                         <span id="label-shopeeBali" class="truncate max-w-[120px]">Pilih File .xlsx</span>
                         <input type="file" id="file-shopeeBali" accept=".xlsx" class="hidden" />
                     </label>
-                    <div id="check-shopeeBali" class="hidden-section absolute top-2 right-2 text-green-500">
+                    <div id="check-shopeeBali" class="hidden-section absolute top-2 right-2 text-orange-500">
                         <i class="fas fa-check-circle text-lg"></i>
                     </div>
                 </div>
 
-                <!-- Data 2 -->
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-start gap-2 relative overflow-hidden transition-all hover:shadow-md">
+                <!-- Data 2: Shopee -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-orange-500 border-x border-b border-gray-100 flex flex-col items-start gap-2 relative overflow-hidden transition-all hover:shadow-md">
                     <div class="flex items-center gap-3 w-full">
-                        <div class="p-3 rounded-lg bg-blue-50 text-blue-500" id="icon-shopeeGo">
+                        <div class="p-3 rounded-lg bg-orange-50 text-orange-500" id="icon-shopeeGo">
                             <i class="fas fa-file-excel text-xl"></i>
                         </div>
                         <div class="flex-1">
-                            <h3 class="font-semibold text-gray-800">Data 2: Shopee</h3>
-                            <p class="text-xs text-gray-500">GoMall</p>
+                            <h3 class="font-bold text-gray-800">Data 2: Shopee</h3>
+                            <p class="text-xs font-medium text-orange-600">GoMall</p>
                         </div>
                     </div>
-                    <label class="mt-2 w-full cursor-pointer flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg border border-dashed border-gray-300 text-sm font-medium transition-colors">
+                    <label class="mt-2 w-full cursor-pointer flex items-center justify-center gap-2 bg-orange-50/50 hover:bg-orange-100 text-orange-700 py-2 rounded-lg border border-dashed border-orange-300 text-sm font-medium transition-colors">
                         <i class="fas fa-upload"></i>
                         <span id="label-shopeeGo" class="truncate max-w-[120px]">Pilih File .xlsx</span>
                         <input type="file" id="file-shopeeGo" accept=".xlsx" class="hidden" />
                     </label>
-                    <div id="check-shopeeGo" class="hidden-section absolute top-2 right-2 text-green-500">
+                    <div id="check-shopeeGo" class="hidden-section absolute top-2 right-2 text-orange-500">
                         <i class="fas fa-check-circle text-lg"></i>
                     </div>
                 </div>
 
-                <!-- Data 3 -->
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-start gap-2 relative overflow-hidden transition-all hover:shadow-md">
+                <!-- Data 3: Tokopedia -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-green-500 border-x border-b border-gray-100 flex flex-col items-start gap-2 relative overflow-hidden transition-all hover:shadow-md">
                     <div class="flex items-center gap-3 w-full">
-                        <div class="p-3 rounded-lg bg-blue-50 text-blue-500" id="icon-tokoBali">
+                        <div class="p-3 rounded-lg bg-green-50 text-green-500" id="icon-tokoBali">
                             <i class="fas fa-file-excel text-xl"></i>
                         </div>
                         <div class="flex-1">
-                            <h3 class="font-semibold text-gray-800">Data 3: Tokopedia</h3>
-                            <p class="text-xs text-gray-500">Bali Stationery</p>
+                            <h3 class="font-bold text-gray-800">Data 3: Tokopedia</h3>
+                            <p class="text-xs font-medium text-green-600">Bali Stationery</p>
                         </div>
                     </div>
-                    <label class="mt-2 w-full cursor-pointer flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg border border-dashed border-gray-300 text-sm font-medium transition-colors">
+                    <label class="mt-2 w-full cursor-pointer flex items-center justify-center gap-2 bg-green-50/50 hover:bg-green-100 text-green-700 py-2 rounded-lg border border-dashed border-green-300 text-sm font-medium transition-colors">
                         <i class="fas fa-upload"></i>
                         <span id="label-tokoBali" class="truncate max-w-[120px]">Pilih File .xlsx</span>
                         <input type="file" id="file-tokoBali" accept=".xlsx" class="hidden" />
@@ -128,18 +132,18 @@
                     </div>
                 </div>
 
-                <!-- Data 4 -->
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-start gap-2 relative overflow-hidden transition-all hover:shadow-md">
+                <!-- Data 4: Tokopedia -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-green-500 border-x border-b border-gray-100 flex flex-col items-start gap-2 relative overflow-hidden transition-all hover:shadow-md">
                     <div class="flex items-center gap-3 w-full">
-                        <div class="p-3 rounded-lg bg-blue-50 text-blue-500" id="icon-tokoGo">
+                        <div class="p-3 rounded-lg bg-green-50 text-green-500" id="icon-tokoGo">
                             <i class="fas fa-file-excel text-xl"></i>
                         </div>
                         <div class="flex-1">
-                            <h3 class="font-semibold text-gray-800">Data 4: Tokopedia</h3>
-                            <p class="text-xs text-gray-500">GoMall</p>
+                            <h3 class="font-bold text-gray-800">Data 4: Tokopedia</h3>
+                            <p class="text-xs font-medium text-green-600">GoMall</p>
                         </div>
                     </div>
-                    <label class="mt-2 w-full cursor-pointer flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg border border-dashed border-gray-300 text-sm font-medium transition-colors">
+                    <label class="mt-2 w-full cursor-pointer flex items-center justify-center gap-2 bg-green-50/50 hover:bg-green-100 text-green-700 py-2 rounded-lg border border-dashed border-green-300 text-sm font-medium transition-colors">
                         <i class="fas fa-upload"></i>
                         <span id="label-tokoGo" class="truncate max-w-[120px]">Pilih File .xlsx</span>
                         <input type="file" id="file-tokoGo" accept=".xlsx" class="hidden" />
@@ -152,22 +156,23 @@
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-blue-50/50 p-6 rounded-xl border border-blue-100 flex flex-col items-center justify-center text-center relative">
-                    <h3 class="font-bold text-blue-900 mb-1">Data 5: Penjualan (Master)</h3>
-                    <p class="text-sm text-blue-700 mb-4">Upload Data AIO sebagai acuan pencocokan.</p>
-                    <label class="cursor-pointer flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold transition-colors shadow-sm w-full max-w-sm">
+                <div class="bg-blue-50/50 p-6 rounded-2xl border-2 border-blue-200 flex flex-col items-center justify-center text-center relative shadow-inner">
+                    <div class="bg-blue-100 p-3 rounded-full mb-3 text-blue-600"><i class="fas fa-database text-2xl"></i></div>
+                    <h3 class="font-bold text-xl text-blue-900 mb-1">Data 5: Penjualan (Master AIO)</h3>
+                    <p class="text-sm text-blue-700 mb-5">Upload file AIO yang berisi mutasi/penjualan untuk pencocokan. Data "ONLINE MANUAL" akan otomatis diekstrak.</p>
+                    <label class="cursor-pointer flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold transition-colors shadow-md w-full max-w-sm">
                         <i class="fas fa-upload"></i>
                         <span id="label-aio" class="truncate max-w-[200px]">Pilih File Data AIO .xlsx</span>
                         <input type="file" id="file-aio" accept=".xlsx" class="hidden" />
                     </label>
-                    <div id="check-aio" class="hidden-section absolute top-4 right-4 text-green-500">
-                        <i class="fas fa-check-circle text-2xl"></i>
+                    <div id="check-aio" class="hidden-section absolute top-4 right-4 text-green-500 bg-white rounded-full">
+                        <i class="fas fa-check-circle text-3xl"></i>
                     </div>
                 </div>
 
                 <div class="flex items-center justify-center p-4">
-                    <button id="btn-analyze" class="w-full max-w-sm py-4 px-6 rounded-xl font-bold text-white shadow-lg transition-all bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                        <i id="analyze-icon" class="fas fa-check-circle text-xl"></i>
+                    <button id="btn-analyze" class="w-full max-w-sm py-4 px-6 rounded-2xl font-bold text-lg text-white shadow-xl transition-all bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3">
+                        <i id="analyze-icon" class="fas fa-cog text-2xl"></i>
                         <span id="analyze-text">Mulai Analisis Data</span>
                     </button>
                 </div>
@@ -176,59 +181,92 @@
 
         <!-- Results Section -->
         <div id="results-section" class="hidden-section space-y-6">
-            <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-                    <div class="bg-blue-100 p-4 rounded-full text-blue-600"><i class="fas fa-file-excel text-2xl"></i></div>
-                    <div>
-                        <p class="text-sm text-gray-500 font-medium">Total Pesanan Diperiksa</p>
-                        <h3 id="count-total" class="text-3xl font-bold text-gray-900">0</h3>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Chart Card -->
+                <div class="lg:col-span-1 bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Perbandingan Marketplace</h3>
+                    <div class="relative w-full aspect-square max-w-[280px]">
+                        <canvas id="marketplaceChart"></canvas>
                     </div>
                 </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-                    <div class="bg-green-100 p-4 rounded-full text-green-600"><i class="fas fa-check-circle text-2xl"></i></div>
-                    <div>
-                        <p class="text-sm text-gray-500 font-medium">Data Cocok (Ditemukan)</p>
-                        <h3 id="count-matched" class="text-3xl font-bold text-green-600">0</h3>
+
+                <!-- Summary Cards -->
+                <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl shadow-sm border border-blue-100 flex flex-col justify-center">
+                        <div class="flex items-center gap-4 mb-2">
+                            <div class="bg-blue-100 p-3 rounded-xl text-blue-600"><i class="fas fa-receipt text-xl"></i></div>
+                            <p class="text-gray-600 font-semibold">Total Semua Pesanan</p>
+                        </div>
+                        <h3 id="count-total" class="text-4xl font-bold text-blue-900 ml-16">0</h3>
                     </div>
-                </div>
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-                    <div class="bg-red-100 p-4 rounded-full text-red-600"><i class="fas fa-times-circle text-2xl"></i></div>
-                    <div>
-                        <p class="text-sm text-gray-500 font-medium">Data Tidak Cocok</p>
-                        <h3 id="count-unmatched" class="text-3xl font-bold text-red-600">0</h3>
+                    
+                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl shadow-sm border border-green-100 flex flex-col justify-center">
+                        <div class="flex items-center gap-4 mb-2">
+                            <div class="bg-green-100 p-3 rounded-xl text-green-600"><i class="fas fa-check-circle text-xl"></i></div>
+                            <p class="text-gray-600 font-semibold">Data Cocok & Manual</p>
+                        </div>
+                        <h3 id="count-matched" class="text-4xl font-bold text-green-700 ml-16">0</h3>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-red-50 to-rose-50 p-6 rounded-2xl shadow-sm border border-red-100 flex flex-col justify-center sm:col-span-2">
+                        <div class="flex items-center gap-4 mb-2">
+                            <div class="bg-red-100 p-3 rounded-xl text-red-600"><i class="fas fa-times-circle text-xl"></i></div>
+                            <p class="text-gray-600 font-semibold">Data Tidak Cocok (Belum Masuk AIO)</p>
+                        </div>
+                        <h3 id="count-unmatched" class="text-4xl font-bold text-red-700 ml-16">0</h3>
                     </div>
                 </div>
             </div>
 
             <!-- Data Table -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/50">
-                    <div class="flex flex-wrap gap-2">
-                        <button id="btn-filter-all" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-blue-600 text-white" data-filter="all">Semua Data</button>
-                        <button id="btn-filter-matched" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-white text-gray-600 border border-gray-200 hover:bg-gray-50" data-filter="matched">Hanya Cocok</button>
-                        <button id="btn-filter-unmatched" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-white text-gray-600 border border-gray-200 hover:bg-gray-50" data-filter="unmatched">Tidak Cocok</button>
+                <div class="p-5 border-b border-gray-100 bg-gray-50/50 space-y-4">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="w-full md:w-auto">
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Filter Marketplace</p>
+                            <div class="flex flex-wrap gap-2">
+                                <button class="platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-gray-800 text-white shadow-sm" data-platform="all">Semua</button>
+                                <button class="platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-orange-600 border border-orange-200 hover:bg-orange-50" data-platform="Shopee"><i class="fas fa-shopping-bag mr-1"></i> Shopee</button>
+                                <button class="platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-green-600 border border-green-200 hover:bg-green-50" data-platform="Tokopedia"><i class="fas fa-store mr-1"></i> Tokopedia</button>
+                                <button class="platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-blue-600 border border-blue-200 hover:bg-blue-50" data-platform="Online Manual"><i class="fas fa-keyboard mr-1"></i> Manual</button>
+                            </div>
+                        </div>
+                        <div class="w-full md:w-auto flex flex-col items-end gap-2">
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Filter Status</p>
+                            <div class="flex bg-gray-200/60 p-1 rounded-xl">
+                                <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all bg-white text-gray-800 shadow-sm" data-status="all">Semua</button>
+                                <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800" data-status="matched">Cocok</button>
+                                <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800" data-status="unmatched">Tidak</button>
+                            </div>
+                        </div>
                     </div>
-                    <button id="btn-export" class="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-medium hover:bg-indigo-100 transition-colors">
-                        <i class="fas fa-download"></i> Export CSV
-                    </button>
                 </div>
 
-                <div class="overflow-x-auto table-container max-h-[500px] overflow-y-auto">
+                <!-- Table Container -->
+                <div class="overflow-x-auto table-container max-h-[600px] overflow-y-auto">
                     <table class="w-full text-left border-collapse relative">
-                        <thead class="sticky top-0 z-10 bg-gray-50 shadow-sm">
-                            <tr class="text-gray-600 text-sm border-b border-gray-200">
-                                <th class="py-3 px-4 font-semibold whitespace-nowrap">No Pemesanan</th>
-                                <th class="py-3 px-4 font-semibold whitespace-nowrap">Platform</th>
-                                <th class="py-3 px-4 font-semibold whitespace-nowrap">Nama Toko</th>
-                                <th class="py-3 px-4 font-semibold whitespace-nowrap">Layanan Pengiriman</th>
-                                <th class="py-3 px-4 font-semibold text-center whitespace-nowrap">Status AIO</th>
+                        <thead class="sticky top-0 z-10 bg-white shadow-sm outline outline-1 outline-gray-200">
+                            <tr class="text-gray-700 text-sm bg-gray-50">
+                                <th class="py-4 px-4 font-bold whitespace-nowrap border-b">No Pemesanan</th>
+                                <th class="py-4 px-4 font-bold whitespace-nowrap border-b">Tanggal (AIO)</th>
+                                <th class="py-4 px-4 font-bold whitespace-nowrap border-b">Platform</th>
+                                <th class="py-4 px-4 font-bold whitespace-nowrap border-b">Nama Toko</th>
+                                <th class="py-4 px-4 font-bold whitespace-nowrap border-b text-right">Nominal (AIO)</th>
+                                <th class="py-4 px-4 font-bold whitespace-nowrap border-b">Layanan Pengiriman</th>
+                                <th class="py-4 px-4 font-bold text-center whitespace-nowrap border-b">Status AIO</th>
                             </tr>
                         </thead>
                         <tbody id="table-body" class="divide-y divide-gray-100">
                             <!-- Rows will be injected here -->
                         </tbody>
                     </table>
+                </div>
+                
+                <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                    <button id="btn-export" class="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors shadow-sm">
+                        <i class="fas fa-file-csv"></i> Export Data CSV
+                    </button>
                 </div>
             </div>
         </div>
@@ -248,14 +286,17 @@
                     aio: null
                 },
                 results: [],
-                filter: 'all' // all, matched, unmatched
+                filterStatus: 'all', // all, matched, unmatched
+                filterPlatform: 'all' // all, Shopee, Tokopedia, Online Manual
             };
+
+            let chartInstance = null;
 
             // Elements
             const elements = {
                 inputs: {
                     shopeeBali: document.getElementById('file-shopeeBali'),
-                    shopeeGo: document.getElementById('file-file-shopeeGo'), // Fixed typo below
+                    shopeeGo: document.getElementById('file-shopeeGo'),
                     tokoBali: document.getElementById('file-tokoBali'),
                     tokoGo: document.getElementById('file-tokoGo'),
                     aio: document.getElementById('file-aio')
@@ -263,7 +304,8 @@
                 btnAnalyze: document.getElementById('btn-analyze'),
                 btnReset: document.getElementById('btn-reset'),
                 btnExport: document.getElementById('btn-export'),
-                filterBtns: document.querySelectorAll('.filter-btn'),
+                platformBtns: document.querySelectorAll('.platform-btn'),
+                statusBtns: document.querySelectorAll('.status-btn'),
                 uploadSection: document.getElementById('upload-section'),
                 resultsSection: document.getElementById('results-section'),
                 errorContainer: document.getElementById('error-container'),
@@ -276,10 +318,17 @@
                 }
             };
 
-            // Fix elements binding
-            elements.inputs.shopeeGo = document.getElementById('file-shopeeGo');
-
             // --- UI Helpers ---
+            const formatCurrency = (val) => {
+                if (!val || val === '-') return '-';
+                // Jika val adalah angka murni
+                const num = Number(val);
+                if (!isNaN(num)) {
+                    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
+                }
+                return val; // Jika format sudah string teks
+            };
+
             const showError = (msg) => {
                 elements.errorText.textContent = msg;
                 elements.errorContainer.classList.remove('hidden-section');
@@ -296,15 +345,21 @@
                     if (file) {
                         state.files[key] = file;
                         
-                        // Update UI
+                        // Update UI Label
                         document.getElementById(`label-${key}`).textContent = file.name;
                         document.getElementById(`label-${key}`).title = file.name;
                         document.getElementById(`check-${key}`).classList.remove('hidden-section');
                         
+                        // Khusus UI Icon agar terlihat aktif
                         const iconWrapper = document.getElementById(`icon-${key}`);
                         if(iconWrapper) {
-                            iconWrapper.classList.remove('bg-blue-50', 'text-blue-500');
-                            iconWrapper.classList.add('bg-green-100', 'text-green-600');
+                            if(key.includes('shopee')) {
+                                iconWrapper.classList.replace('bg-orange-50', 'bg-orange-500');
+                                iconWrapper.classList.replace('text-orange-500', 'text-white');
+                            } else if (key.includes('toko')) {
+                                iconWrapper.classList.replace('bg-green-50', 'bg-green-500');
+                                iconWrapper.classList.replace('text-green-500', 'text-white');
+                            }
                         }
                     }
                 });
@@ -375,8 +430,11 @@
                     const row = data[i];
                     if (!row || row.length === 0) continue;
                     
-                    const text = String(row[2] || '').trim(); // Kolom 3
-                    if (text) results.push(text);
+                    const dateInfo = String(row[1] || '').trim(); // Kolom 2 (Hari & Tanggal)
+                    const text = String(row[2] || '').trim(); // Kolom 3 (No Pemesanan/Keterangan)
+                    const nominal = String(row[4] || '').trim(); // Kolom 5 (Nominal)
+                    
+                    if (text) results.push({ text, date: dateInfo, nominal, used: false });
                 }
                 return results;
             };
@@ -388,7 +446,7 @@
                     return;
                 }
                 if (!state.files.aio) {
-                    showError("Data 5 (Data AIO) wajib diunggah untuk pencocokan.");
+                    showError("Data 5 (Data AIO Master) wajib diunggah untuk pencocokan.");
                     return;
                 }
 
@@ -396,7 +454,7 @@
                 
                 // Loading State UI
                 elements.btnAnalyze.disabled = true;
-                document.getElementById('analyze-icon').className = 'fas fa-spinner fa-spin text-xl';
+                document.getElementById('analyze-icon').className = 'fas fa-spinner fa-spin text-2xl';
                 document.getElementById('analyze-text').textContent = 'Memproses Data...';
 
                 try {
@@ -416,23 +474,59 @@
                     if (data3.length) combinedOrders = combinedOrders.concat(processTokopedia(data3, 'Bali Stationery'));
                     if (data4.length) combinedOrders = combinedOrders.concat(processTokopedia(data4, 'GoMall'));
 
-                    if (combinedOrders.length === 0) {
-                        throw new Error("Tidak ada data pesanan yang ditemukan pada Data 1 sampai Data 4.");
+                    const aioRecords = processAIO(data5);
+                    const finalResults = [];
+
+                    // 1. Pencocokan Data Shopee & Tokopedia
+                    combinedOrders.forEach(order => {
+                        // Cari di AIO (Cek teks AIO mengandung Order ID)
+                        const matchedAio = aioRecords.find(aio => !aio.used && aio.text.includes(order.orderId));
+                        
+                        if (matchedAio) {
+                            matchedAio.used = true; // Tandai agar tidak dipakai ganda
+                            finalResults.push({
+                                ...order,
+                                isMatch: true,
+                                date: matchedAio.date,
+                                nominal: matchedAio.nominal
+                            });
+                        } else {
+                            finalResults.push({
+                                ...order,
+                                isMatch: false,
+                                date: '-',
+                                nominal: '-'
+                            });
+                        }
+                    });
+
+                    // 2. Ekstrak ONLINE MANUAL dari sisa AIO
+                    aioRecords.forEach(aio => {
+                        if (aio.text.toUpperCase().includes('ONLINE MANUAL')) {
+                            finalResults.push({
+                                orderId: aio.text, 
+                                platform: 'Online Manual',
+                                store: 'Manual / AIO',
+                                delivery: 'Manual',
+                                isMatch: true, 
+                                date: aio.date,
+                                nominal: aio.nominal
+                            });
+                        }
+                    });
+
+                    if (finalResults.length === 0) {
+                        throw new Error("Tidak ada data pesanan yang ditemukan untuk dianalisa.");
                     }
 
-                    const aioList = processAIO(data5);
-
-                    // Pencocokan
-                    state.results = combinedOrders.map(order => {
-                        const isMatch = aioList.some(aioText => aioText.includes(order.orderId));
-                        return { ...order, isMatch };
-                    });
+                    state.results = finalResults;
 
                     // Render UI
                     elements.uploadSection.classList.add('hidden-section');
                     elements.resultsSection.classList.remove('hidden-section');
                     elements.btnReset.classList.remove('hidden-section');
                     
+                    updateChart(finalResults);
                     renderTable();
 
                 } catch (err) {
@@ -440,16 +534,61 @@
                     showError(err.message || "Terjadi kesalahan saat memproses data.");
                 } finally {
                     elements.btnAnalyze.disabled = false;
-                    document.getElementById('analyze-icon').className = 'fas fa-check-circle text-xl';
+                    document.getElementById('analyze-icon').className = 'fas fa-cog text-2xl';
                     document.getElementById('analyze-text').textContent = 'Mulai Analisis Data';
                 }
             };
 
+            // --- Chart Logic ---
+            const updateChart = (data) => {
+                const ctx = document.getElementById('marketplaceChart').getContext('2d');
+                
+                const shopeeCount = data.filter(d => d.platform === 'Shopee').length;
+                const tokoCount = data.filter(d => d.platform === 'Tokopedia').length;
+                const manualCount = data.filter(d => d.platform === 'Online Manual').length;
+
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+
+                chartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Shopee', 'Tokopedia', 'Manual'],
+                        datasets: [{
+                            data: [shopeeCount, tokoCount, manualCount],
+                            backgroundColor: [
+                                '#f97316', // Orange
+                                '#22c55e', // Green
+                                '#3b82f6'  // Blue
+                            ],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20,
+                                    font: { family: "'Inter', sans-serif", weight: 'bold' }
+                                }
+                            }
+                        },
+                        cutout: '65%'
+                    }
+                });
+            };
+
             // --- Rendering Logic ---
             const renderTable = () => {
-                const { results, filter } = state;
+                const { results, filterStatus, filterPlatform } = state;
                 
-                // Hitung statistik
+                // Hitung statistik (Total Keseluruhan Tanpa Filter)
                 const total = results.length;
                 const matched = results.filter(r => r.isMatch).length;
                 const unmatched = total - matched;
@@ -458,19 +597,27 @@
                 elements.counts.matched.textContent = matched;
                 elements.counts.unmatched.textContent = unmatched;
 
-                // Terapkan filter
+                // Terapkan filter berlapis
                 const filteredData = results.filter(r => {
-                    if (filter === 'matched') return r.isMatch;
-                    if (filter === 'unmatched') return !r.isMatch;
-                    return true;
+                    // Cek Filter Status
+                    let passStatus = true;
+                    if (filterStatus === 'matched') passStatus = r.isMatch;
+                    if (filterStatus === 'unmatched') passStatus = !r.isMatch;
+                    
+                    // Cek Filter Platform
+                    let passPlatform = true;
+                    if (filterPlatform !== 'all') passPlatform = r.platform === filterPlatform;
+
+                    return passStatus && passPlatform;
                 });
 
                 // Buat HTML Tabel
                 if (filteredData.length === 0) {
                     elements.tbody.innerHTML = `
                         <tr>
-                            <td colspan="5" class="py-10 text-center text-gray-500">
-                                Tidak ada data yang sesuai dengan filter.
+                            <td colspan="7" class="py-12 text-center text-gray-500 font-medium">
+                                <i class="fas fa-folder-open text-3xl mb-3 block opacity-50"></i>
+                                Tidak ada data yang sesuai dengan filter saat ini.
                             </td>
                         </tr>
                     `;
@@ -478,19 +625,26 @@
                 }
 
                 elements.tbody.innerHTML = filteredData.map(row => {
-                    const platformBadge = row.platform === 'Shopee' 
-                        ? '<span class="px-2 py-1 text-xs font-bold rounded-md bg-orange-100 text-orange-700">Shopee</span>'
-                        : '<span class="px-2 py-1 text-xs font-bold rounded-md bg-green-100 text-green-700">Tokopedia</span>';
+                    let platformBadge = '';
+                    if(row.platform === 'Shopee') {
+                        platformBadge = '<span class="px-3 py-1 text-xs font-extrabold rounded-md bg-orange-500 text-white shadow-sm border border-orange-600">SHOPEE</span>';
+                    } else if (row.platform === 'Tokopedia') {
+                        platformBadge = '<span class="px-3 py-1 text-xs font-extrabold rounded-md bg-green-500 text-white shadow-sm border border-green-600">TOKOPEDIA</span>';
+                    } else {
+                        platformBadge = '<span class="px-3 py-1 text-xs font-extrabold rounded-md bg-blue-500 text-white shadow-sm border border-blue-600">MANUAL</span>';
+                    }
                     
                     const statusBadge = row.isMatch
-                        ? '<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold"><i class="fas fa-check-circle"></i> Cocok</span>'
-                        : '<span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold"><i class="fas fa-times-circle"></i> Tidak</span>';
+                        ? '<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200"><i class="fas fa-check-circle"></i> Cocok</span>'
+                        : '<span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200"><i class="fas fa-times-circle"></i> Tidak Ada di AIO</span>';
 
                     return `
                         <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="py-3 px-4 font-medium text-gray-900">${row.orderId}</td>
+                            <td class="py-3 px-4 font-semibold text-gray-900"><div class="max-w-[200px] truncate" title="${row.orderId}">${row.orderId}</div></td>
+                            <td class="py-3 px-4 text-gray-600 text-sm whitespace-nowrap">${row.date}</td>
                             <td class="py-3 px-4">${platformBadge}</td>
-                            <td class="py-3 px-4 text-gray-600">${row.store}</td>
+                            <td class="py-3 px-4 text-gray-600 font-medium">${row.store}</td>
+                            <td class="py-3 px-4 text-gray-900 font-bold text-right whitespace-nowrap">${formatCurrency(row.nominal)}</td>
                             <td class="py-3 px-4 text-gray-600">${row.delivery || '-'}</td>
                             <td class="py-3 px-4 text-center">${statusBadge}</td>
                         </tr>
@@ -498,25 +652,48 @@
                 }).join('');
             };
 
-            // --- Filter Buttons Logic ---
-            elements.filterBtns.forEach(btn => {
+            // --- Filter Event Listeners ---
+            
+            // Platform Filter
+            elements.platformBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    // Update state
-                    state.filter = e.target.dataset.filter;
+                    const target = e.currentTarget;
+                    state.filterPlatform = target.dataset.platform;
                     
-                    // Update classes for active button
-                    elements.filterBtns.forEach(b => {
-                        b.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-white text-gray-600 border border-gray-200 hover:bg-gray-50';
+                    // Reset all styles
+                    elements.platformBtns.forEach(b => {
+                        b.className = b.dataset.platform === 'Shopee' ? 'platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-orange-600 border border-orange-200 hover:bg-orange-50' : 
+                                      b.dataset.platform === 'Tokopedia' ? 'platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-green-600 border border-green-200 hover:bg-green-50' :
+                                      b.dataset.platform === 'Online Manual' ? 'platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-blue-600 border border-blue-200 hover:bg-blue-50' :
+                                      'platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-gray-700 border border-gray-200 hover:bg-gray-50';
                     });
                     
-                    if(state.filter === 'all') {
-                        e.target.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-blue-600 text-white';
-                    } else if (state.filter === 'matched') {
-                        e.target.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-green-600 text-white';
+                    // Set active style
+                    if(state.filterPlatform === 'all') {
+                        target.className = 'platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-gray-800 text-white shadow-sm';
+                    } else if (state.filterPlatform === 'Shopee') {
+                        target.className = 'platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-orange-500 text-white shadow-sm';
+                    } else if (state.filterPlatform === 'Tokopedia') {
+                        target.className = 'platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-green-500 text-white shadow-sm';
                     } else {
-                        e.target.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-red-600 text-white';
+                        target.className = 'platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-blue-500 text-white shadow-sm';
                     }
 
+                    renderTable();
+                });
+            });
+
+            // Status Filter
+            elements.statusBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const target = e.currentTarget;
+                    state.filterStatus = target.dataset.status;
+                    
+                    elements.statusBtns.forEach(b => {
+                        b.className = 'status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800';
+                    });
+                    target.className = 'status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all bg-white text-gray-800 shadow-sm';
+                    
                     renderTable();
                 });
             });
@@ -526,27 +703,35 @@
                 if (!state.results || state.results.length === 0) return;
                 
                 const filteredData = state.results.filter(r => {
-                    if (state.filter === 'matched') return r.isMatch;
-                    if (state.filter === 'unmatched') return !r.isMatch;
-                    return true;
+                    let passStatus = true;
+                    if (state.filterStatus === 'matched') passStatus = r.isMatch;
+                    if (state.filterStatus === 'unmatched') passStatus = !r.isMatch;
+                    
+                    let passPlatform = true;
+                    if (state.filterPlatform !== 'all') passPlatform = r.platform === state.filterPlatform;
+
+                    return passStatus && passPlatform;
                 });
 
-                const headers = ["No Pemesanan", "Platform", "Toko", "Layanan Pengiriman", "Status"];
+                const headers = ["No Pemesanan", "Tanggal AIO", "Platform", "Toko", "Nominal AIO", "Layanan Pengiriman", "Status"];
                 const rows = filteredData.map(r => [
                     r.orderId,
+                    r.date,
                     r.platform,
                     r.store,
+                    r.nominal,
                     r.delivery,
                     r.isMatch ? 'Cocok' : 'Tidak Cocok'
                 ]);
                 
                 let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
-                csvContent += rows.map(e => e.map(item => `"${item}"`).join(",")).join("\n");
+                // Escape commas within strings
+                csvContent += rows.map(e => e.map(item => `"${String(item).replace(/"/g, '""')}"`).join(",")).join("\n");
                 
                 const encodedUri = encodeURI(csvContent);
                 const link = document.createElement("a");
                 link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "Hasil_Analisa_Penjualan.csv");
+                link.setAttribute("download", "Laporan_Penjualan_Marketplace_AIO.csv");
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -557,7 +742,8 @@
                 // Reset state
                 state.files = { shopeeBali: null, shopeeGo: null, tokoBali: null, tokoGo: null, aio: null };
                 state.results = [];
-                state.filter = 'all';
+                state.filterStatus = 'all';
+                state.filterPlatform = 'all';
                 
                 // Reset UI inputs
                 Object.keys(state.files).forEach(key => {
@@ -567,19 +753,19 @@
                     
                     const iconWrapper = document.getElementById(`icon-${key}`);
                     if(iconWrapper) {
-                        iconWrapper.classList.add('bg-blue-50', 'text-blue-500');
-                        iconWrapper.classList.remove('bg-green-100', 'text-green-600');
+                        if(key.includes('shopee')) {
+                            iconWrapper.classList.replace('bg-orange-500', 'bg-orange-50');
+                            iconWrapper.classList.replace('text-white', 'text-orange-500');
+                        } else if (key.includes('toko')) {
+                            iconWrapper.classList.replace('bg-green-500', 'bg-green-50');
+                            iconWrapper.classList.replace('text-white', 'text-green-500');
+                        }
                     }
                 });
 
-                // Reset Filter button classes
-                elements.filterBtns.forEach(b => {
-                    if(b.dataset.filter === 'all') {
-                        b.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-blue-600 text-white';
-                    } else {
-                        b.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-white text-gray-600 border border-gray-200 hover:bg-gray-50';
-                    }
-                });
+                // Reset Filters UI
+                elements.platformBtns[0].click(); // Click 'Semua' platform
+                elements.statusBtns[0].click();   // Click 'Semua' status
 
                 // Toggle Sections
                 elements.uploadSection.classList.remove('hidden-section');
