@@ -184,26 +184,35 @@
             
             <!-- Summary Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl shadow-sm border border-blue-100 flex flex-col justify-center">
+                <div id="card-total" class="cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl shadow-sm border border-blue-100 flex flex-col justify-center">
                     <div class="flex items-center gap-4 mb-2">
                         <div class="bg-blue-100 p-3 rounded-xl text-blue-600"><i class="fas fa-receipt text-xl"></i></div>
-                        <p class="text-gray-600 font-semibold">Total Semua Pesanan</p>
+                        <div>
+                            <p class="text-gray-600 font-semibold">Total Semua Pesanan</p>
+                            <p class="text-[10px] text-blue-500 font-medium">(Klik untuk detail)</p>
+                        </div>
                     </div>
                     <h3 id="count-total" class="text-4xl font-bold text-blue-900 ml-16">0</h3>
                 </div>
                 
-                <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl shadow-sm border border-green-100 flex flex-col justify-center">
+                <div id="card-matched" class="cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl shadow-sm border border-green-100 flex flex-col justify-center">
                     <div class="flex items-center gap-4 mb-2">
                         <div class="bg-green-100 p-3 rounded-xl text-green-600"><i class="fas fa-check-circle text-xl"></i></div>
-                        <p class="text-gray-600 font-semibold">Data Cocok & Manual</p>
+                        <div>
+                            <p class="text-gray-600 font-semibold">Data Cocok & Manual</p>
+                            <p class="text-[10px] text-green-600 font-medium">(Klik untuk detail)</p>
+                        </div>
                     </div>
                     <h3 id="count-matched" class="text-4xl font-bold text-green-700 ml-16">0</h3>
                 </div>
 
-                <div class="bg-gradient-to-br from-red-50 to-rose-50 p-6 rounded-2xl shadow-sm border border-red-100 flex flex-col justify-center">
+                <div id="card-unmatched" class="cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all bg-gradient-to-br from-red-50 to-rose-50 p-6 rounded-2xl shadow-sm border border-red-100 flex flex-col justify-center">
                     <div class="flex items-center gap-4 mb-2">
                         <div class="bg-red-100 p-3 rounded-xl text-red-600"><i class="fas fa-times-circle text-xl"></i></div>
-                        <p class="text-gray-600 font-semibold">Data Tidak Cocok</p>
+                        <div>
+                            <p class="text-gray-600 font-semibold">Data Tidak Cocok</p>
+                            <p class="text-[10px] text-red-500 font-medium">(Klik untuk detail)</p>
+                        </div>
                     </div>
                     <h3 id="count-unmatched" class="text-4xl font-bold text-red-700 ml-16">0</h3>
                 </div>
@@ -373,6 +382,11 @@
                 errorContainer: document.getElementById('error-container'),
                 errorText: document.getElementById('error-text'),
                 tbody: document.getElementById('table-body'),
+                cards: {
+                    total: document.getElementById('card-total'),
+                    matched: document.getElementById('card-matched'),
+                    unmatched: document.getElementById('card-unmatched')
+                },
                 counts: {
                     total: document.getElementById('count-total'),
                     matched: document.getElementById('count-matched'),
@@ -638,18 +652,37 @@
             // --- Modal Logic ---
             const showModalDetail = (label, type, allData) => {
                 let filteredData = [];
+                let iconClass = 'fa-list';
+                let iconColor = 'text-blue-500';
+
                 if (type === 'store') {
+                    iconClass = 'fa-store';
                     if (label === 'Shopee Balistationery') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'Bali Stationery');
                     else if (label === 'Shopee Gomall') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'GoMall');
                     else if (label === 'Toped Balistationery') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'Bali Stationery');
                     else if (label === 'Toped Gomall') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'GoMall');
                     else if (label === 'Online Manual') filteredData = allData.filter(d => d.platform === 'Online Manual');
                 } else if (type === 'delivery') {
+                    iconClass = 'fa-truck';
                     filteredData = allData.filter(d => d.deliveryCategory === label);
+                } else if (type === 'summary') {
+                    if (label === 'Semua Pesanan') {
+                        filteredData = allData;
+                        iconClass = 'fa-receipt';
+                        iconColor = 'text-blue-600';
+                    } else if (label === 'Data Cocok & Manual') {
+                        filteredData = allData.filter(d => d.isMatch);
+                        iconClass = 'fa-check-circle';
+                        iconColor = 'text-green-600';
+                    } else if (label === 'Data Tidak Cocok') {
+                        filteredData = allData.filter(d => !d.isMatch);
+                        iconClass = 'fa-times-circle';
+                        iconColor = 'text-red-600';
+                    }
                 }
 
                 // Update UI Modal
-                elements.modal.title.innerHTML = `<i class="fas ${type === 'store' ? 'fa-store' : 'fa-truck'} text-blue-500 mr-2"></i> Rincian: ${label}`;
+                elements.modal.title.innerHTML = `<i class="fas ${iconClass} ${iconColor} mr-2"></i> Rincian: ${label}`;
                 
                 if (filteredData.length === 0) {
                     elements.modal.tbody.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-gray-500">Tidak ada data detail.</td></tr>`;
@@ -1057,6 +1090,16 @@
             elements.btnAnalyze.addEventListener('click', analyzeData);
             elements.btnReset.addEventListener('click', resetApp);
             elements.btnExport.addEventListener('click', exportToXLSX); 
+            
+            elements.cards.total.addEventListener('click', () => {
+                if(state.results && state.results.length > 0) showModalDetail('Semua Pesanan', 'summary', state.results);
+            });
+            elements.cards.matched.addEventListener('click', () => {
+                if(state.results && state.results.length > 0) showModalDetail('Data Cocok & Manual', 'summary', state.results);
+            });
+            elements.cards.unmatched.addEventListener('click', () => {
+                if(state.results && state.results.length > 0) showModalDetail('Data Tidak Cocok', 'summary', state.results);
+            });
         });
     </script>
 </body>
