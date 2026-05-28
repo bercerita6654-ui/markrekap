@@ -19,18 +19,18 @@
 
     <style>
         /* Custom scrollbar for table */
-        .table-container::-webkit-scrollbar {
+        .table-container::-webkit-scrollbar, .modal-scroll::-webkit-scrollbar {
             height: 8px;
             width: 8px;
         }
-        .table-container::-webkit-scrollbar-track {
+        .table-container::-webkit-scrollbar-track, .modal-scroll::-webkit-scrollbar-track {
             background: #f1f1f1; 
         }
-        .table-container::-webkit-scrollbar-thumb {
+        .table-container::-webkit-scrollbar-thumb, .modal-scroll::-webkit-scrollbar-thumb {
             background: #cbd5e1; 
             border-radius: 4px;
         }
-        .table-container::-webkit-scrollbar-thumb:hover {
+        .table-container::-webkit-scrollbar-thumb:hover, .modal-scroll::-webkit-scrollbar-thumb:hover {
             background: #94a3b8; 
         }
         
@@ -41,7 +41,7 @@
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 min-h-screen p-6">
 
-    <div class="max-w-7xl mx-auto space-y-6">
+    <div class="max-w-7xl mx-auto space-y-6 relative">
         
         <!-- Header -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -212,8 +212,8 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Chart Card 1 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Proporsi Toko & Marketplace</h3>
-                    <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4">
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Proporsi Toko & Marketplace <span class="text-xs font-normal text-gray-400 ml-2">(Klik grafik untuk detail)</span></h3>
+                    <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4 cursor-pointer">
                         <canvas id="marketplaceChart"></canvas>
                     </div>
                     <!-- View Kuantiti dan Nominal -->
@@ -222,8 +222,8 @@
 
                 <!-- Chart Card 2 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman</h3>
-                    <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4">
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman <span class="text-xs font-normal text-gray-400 ml-2">(Klik grafik untuk detail)</span></h3>
+                    <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4 cursor-pointer">
                         <canvas id="deliveryChart"></canvas>
                     </div>
                     <!-- View Kuantiti dan Nominal -->
@@ -231,26 +231,38 @@
                 </div>
             </div>
 
-            <!-- Data Table -->
+            <!-- Data Table Section -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="p-5 border-b border-gray-100 bg-gray-50/50 space-y-4">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div class="w-full md:w-auto">
-                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Filter Marketplace</p>
-                            <div class="flex flex-wrap gap-2">
-                                <button class="platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-gray-800 text-white shadow-sm" data-platform="all">Semua</button>
-                                <button class="platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-orange-600 border border-orange-200 hover:bg-orange-50" data-platform="Shopee"><i class="fas fa-shopping-bag mr-1"></i> Shopee</button>
-                                <button class="platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-green-600 border border-green-200 hover:bg-green-50" data-platform="Tokopedia"><i class="fas fa-store mr-1"></i> Tokopedia</button>
-                                <button class="platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-blue-600 border border-blue-200 hover:bg-blue-50" data-platform="Online Manual"><i class="fas fa-keyboard mr-1"></i> Manual</button>
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                        <div class="flex flex-col md:flex-row gap-4 w-full lg:w-auto">
+                            <!-- Filter Marketplace -->
+                            <div class="w-full md:w-auto">
+                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Filter Marketplace</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <button class="platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-gray-800 text-white shadow-sm" data-platform="all">Semua</button>
+                                    <button class="platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-orange-600 border border-orange-200 hover:bg-orange-50" data-platform="Shopee"><i class="fas fa-shopping-bag mr-1"></i> Shopee</button>
+                                    <button class="platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-green-600 border border-green-200 hover:bg-green-50" data-platform="Tokopedia"><i class="fas fa-store mr-1"></i> Tokopedia</button>
+                                    <button class="platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-blue-600 border border-blue-200 hover:bg-blue-50" data-platform="Online Manual"><i class="fas fa-keyboard mr-1"></i> Manual</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Filter Status -->
+                            <div class="w-full md:w-auto flex flex-col gap-2">
+                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Filter Status</p>
+                                <div class="flex bg-gray-200/60 p-1 rounded-xl">
+                                    <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all bg-white text-gray-800 shadow-sm" data-status="all">Semua</button>
+                                    <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800" data-status="matched">Cocok</button>
+                                    <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800" data-status="unmatched">Tidak</button>
+                                </div>
                             </div>
                         </div>
-                        <div class="w-full md:w-auto flex flex-col items-end gap-2">
-                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Filter Status</p>
-                            <div class="flex bg-gray-200/60 p-1 rounded-xl">
-                                <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all bg-white text-gray-800 shadow-sm" data-status="all">Semua</button>
-                                <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800" data-status="matched">Cocok</button>
-                                <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800" data-status="unmatched">Tidak</button>
-                            </div>
+
+                        <!-- Export Button Dipindah Ke Sini (Atas Tabel) -->
+                        <div class="w-full lg:w-auto flex justify-end mt-4 lg:mt-0">
+                            <button id="btn-export" class="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors shadow-md w-full sm:w-auto justify-center">
+                                <i class="fas fa-file-excel text-lg"></i> Export Data XLSX
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -274,16 +286,52 @@
                         </tbody>
                     </table>
                 </div>
-                
-                <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
-                    <!-- Tombol diubah agar mengunduh format XLSX -->
-                    <button id="btn-export" class="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors shadow-sm">
-                        <i class="fas fa-file-excel"></i> Export Data XLSX
-                    </button>
-                </div>
             </div>
         </div>
 
+    </div>
+
+    <!-- Modal Popup Detail Grafik -->
+    <div id="chart-detail-modal" class="hidden-section fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <!-- Modal Header -->
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 id="modal-title" class="font-bold text-gray-800 text-xl flex items-center gap-2">
+                    <i class="fas fa-list text-blue-500"></i> Detail Data
+                </h3>
+                <button id="btn-close-modal" class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Body (Table) -->
+            <div class="p-0 overflow-y-auto modal-scroll flex-1 bg-white">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 bg-white shadow-sm outline outline-1 outline-gray-200">
+                        <tr class="text-gray-700 text-sm bg-gray-100">
+                            <th class="py-3 px-6 font-bold border-b whitespace-nowrap">No Pemesanan</th>
+                            <th class="py-3 px-6 font-bold border-b whitespace-nowrap">Tanggal (AIO)</th>
+                            <th class="py-3 px-6 font-bold border-b whitespace-nowrap text-right">Nominal (AIO)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modal-tbody" class="divide-y divide-gray-100">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Modal Footer (Summary) -->
+            <div class="p-5 border-t border-gray-200 bg-gray-50 flex flex-wrap justify-between items-center gap-4">
+                <div class="flex flex-col">
+                    <span class="text-xs text-gray-500 font-bold uppercase tracking-wider">Total Transaksi</span>
+                    <span class="font-bold text-gray-800 text-xl"><span id="modal-qty">0</span> <span class="text-sm font-medium text-gray-500">Qty</span></span>
+                </div>
+                <div class="flex flex-col text-right">
+                    <span class="text-xs text-gray-500 font-bold uppercase tracking-wider">Total Nominal</span>
+                    <span class="font-black text-blue-700 text-2xl" id="modal-nominal">Rp 0</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Application Logic -->
@@ -329,6 +377,14 @@
                     total: document.getElementById('count-total'),
                     matched: document.getElementById('count-matched'),
                     unmatched: document.getElementById('count-unmatched')
+                },
+                modal: {
+                    container: document.getElementById('chart-detail-modal'),
+                    btnClose: document.getElementById('btn-close-modal'),
+                    title: document.getElementById('modal-title'),
+                    tbody: document.getElementById('modal-tbody'),
+                    qty: document.getElementById('modal-qty'),
+                    nominal: document.getElementById('modal-nominal')
                 }
             };
 
@@ -341,7 +397,6 @@
                 return val;
             };
 
-            // Parser pintar untuk mengambil angka murni dari data nominal apapun
             const parseNominal = (val) => {
                 if (typeof val === 'number') return Math.round(val);
                 if (!val || val === '-') return 0;
@@ -350,27 +405,17 @@
                 return isNaN(num) ? 0 : num;
             };
 
-            // Parser untuk mengubah Serial Number Excel ke Format Tanggal DD/MM/YYYY
             const formatExcelDate = (val) => {
                 if (!val) return '-';
-                // Jika sudah berupa teks/string dari excel
                 if (typeof val === 'string') return val.trim();
-                
-                // Jika berupa nomor seri (format bawaan excel untuk tanggal)
                 if (typeof val === 'number') {
-                    // 25569 adalah jumlah hari dari 1 Jan 1900 ke 1 Jan 1970
-                    // -1 hari karena bug leap year bawaan sistem Excel 1900
                     const excelDays = val - 25569; 
                     const date = new Date(excelDays * 86400 * 1000);
-                    
-                    // Gunakan metode UTC agar tidak terpengaruh zona waktu komputer lokal
                     const d = String(date.getUTCDate()).padStart(2, '0');
                     const m = String(date.getUTCMonth() + 1).padStart(2, '0');
                     const y = date.getUTCFullYear();
-                    
                     return `${d}/${m}/${y}`;
                 }
-                
                 return String(val).trim();
             };
 
@@ -465,8 +510,8 @@
                     const row = data[i];
                     if (!row || row.length === 0) continue;
                     
-                    const rawDate = row[1]; // Ambil data mentah (bisa string atau number)
-                    const dateInfo = formatExcelDate(rawDate); // Konversi ke format yang benar
+                    const rawDate = row[1]; 
+                    const dateInfo = formatExcelDate(rawDate); 
                     const text = String(row[2] || '').trim(); 
                     const rawNominal = row[4]; 
                     const numericNominal = parseNominal(rawNominal); 
@@ -590,12 +635,59 @@
                 }
             };
 
+            // --- Modal Logic ---
+            const showModalDetail = (label, type, allData) => {
+                let filteredData = [];
+                if (type === 'store') {
+                    if (label === 'Shopee Balistationery') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'Bali Stationery');
+                    else if (label === 'Shopee Gomall') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'GoMall');
+                    else if (label === 'Toped Balistationery') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'Bali Stationery');
+                    else if (label === 'Toped Gomall') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'GoMall');
+                    else if (label === 'Online Manual') filteredData = allData.filter(d => d.platform === 'Online Manual');
+                } else if (type === 'delivery') {
+                    filteredData = allData.filter(d => d.deliveryCategory === label);
+                }
+
+                // Update UI Modal
+                elements.modal.title.innerHTML = `<i class="fas ${type === 'store' ? 'fa-store' : 'fa-truck'} text-blue-500 mr-2"></i> Rincian: ${label}`;
+                
+                if (filteredData.length === 0) {
+                    elements.modal.tbody.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-gray-500">Tidak ada data detail.</td></tr>`;
+                } else {
+                    elements.modal.tbody.innerHTML = filteredData.map(r => `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="py-3 px-6 font-semibold text-gray-900 border-b border-gray-100">${r.orderId}</td>
+                            <td class="py-3 px-6 text-gray-600 text-sm border-b border-gray-100">${r.date}</td>
+                            <td class="py-3 px-6 text-gray-900 font-bold text-right border-b border-gray-100">${formatCurrency(r.numericNominal)}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                const totalQty = filteredData.length;
+                const totalNominal = filteredData.reduce((sum, d) => sum + (d.numericNominal || 0), 0);
+                
+                elements.modal.qty.textContent = totalQty;
+                elements.modal.nominal.textContent = formatCurrency(totalNominal);
+
+                // Tampilkan Modal
+                elements.modal.container.classList.remove('hidden-section');
+            };
+
+            // Close Modal Events
+            elements.modal.btnClose.addEventListener('click', () => {
+                elements.modal.container.classList.add('hidden-section');
+            });
+            elements.modal.container.addEventListener('click', (e) => {
+                if (e.target === elements.modal.container) {
+                    elements.modal.container.classList.add('hidden-section');
+                }
+            });
+
             // --- Chart Logic ---
             const updateChart = (data) => {
                 const ctxStore = document.getElementById('marketplaceChart').getContext('2d');
                 const ctxDelivery = document.getElementById('deliveryChart').getContext('2d');
                 
-                // Helper Hitung Agregasi
                 const aggregateStore = (platform, store) => {
                     const filtered = data.filter(d => platform === 'Online Manual' ? d.platform === 'Online Manual' : (d.platform === platform && d.store === store));
                     return {
@@ -612,19 +704,17 @@
                     };
                 };
 
-                // Store Data
                 const sBali = aggregateStore('Shopee', 'Bali Stationery');
                 const sGo = aggregateStore('Shopee', 'GoMall');
                 const tBali = aggregateStore('Tokopedia', 'Bali Stationery');
                 const tGo = aggregateStore('Tokopedia', 'GoMall');
                 const manual = aggregateStore('Online Manual', null);
 
-                // Delivery Data
                 const instan = aggregateDelivery('Instan');
                 const reguler = aggregateDelivery('Reguler');
                 const manualDeliv = aggregateDelivery('Manual/Lainnya');
 
-                // Render HTML Legends / View Total Kuantiti & Nominal
+                // Render HTML Legends
                 document.getElementById('legend-marketplace').innerHTML = `
                     <div class="flex justify-between items-center bg-orange-50 p-2 rounded text-orange-800">
                         <span><i class="fas fa-circle text-[8px] mr-1 text-[#ea580c]"></i> Shopee Balistationery</span> 
@@ -663,7 +753,6 @@
                     </div>
                 `;
 
-                // Tooltip Config yang menampilkan Nominal
                 const tooltipConfig = {
                     callbacks: {
                         label: function(context) {
@@ -685,7 +774,7 @@
                         labels: ['Shopee Balistationery', 'Shopee Gomall', 'Toped Balistationery', 'Toped Gomall', 'Online Manual'],
                         datasets: [{
                             data: [sBali.count, sGo.count, tBali.count, tGo.count, manual.count],
-                            nominals: [sBali.nominal, sGo.nominal, tBali.nominal, tGo.nominal, manual.nominal], // Custom dataset array
+                            nominals: [sBali.nominal, sGo.nominal, tBali.nominal, tGo.nominal, manual.nominal],
                             backgroundColor: ['#ea580c', '#fb923c', '#16a34a', '#4ade80', '#3b82f6'],
                             borderWidth: 2,
                             borderColor: '#ffffff',
@@ -695,8 +784,18 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        onClick: (event, elements, chart) => {
+                            if (elements.length > 0) {
+                                const idx = elements[0].index;
+                                const label = chart.data.labels[idx];
+                                showModalDetail(label, 'store', data);
+                            }
+                        },
+                        onHover: (event, chartElement) => {
+                            event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                        },
                         plugins: {
-                            legend: { display: false }, // Disembunyikan karena sudah ada custom HTML legend
+                            legend: { display: false }, 
                             tooltip: tooltipConfig
                         },
                         cutout: '60%'
@@ -709,7 +808,7 @@
                         labels: ['Instan', 'Reguler', 'Manual / Lainnya'],
                         datasets: [{
                             data: [instan.count, reguler.count, manualDeliv.count],
-                            nominals: [instan.nominal, reguler.nominal, manualDeliv.nominal], // Custom dataset array
+                            nominals: [instan.nominal, reguler.nominal, manualDeliv.nominal], 
                             backgroundColor: ['#ef4444', '#eab308', '#9ca3af'],
                             borderWidth: 2,
                             borderColor: '#ffffff',
@@ -719,8 +818,18 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        onClick: (event, elements, chart) => {
+                            if (elements.length > 0) {
+                                const idx = elements[0].index;
+                                const label = chart.data.labels[idx];
+                                showModalDetail(label, 'delivery', data);
+                            }
+                        },
+                        onHover: (event, chartElement) => {
+                            event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                        },
                         plugins: {
-                            legend: { display: false }, // Disembunyikan karena sudah ada custom HTML legend
+                            legend: { display: false },
                             tooltip: tooltipConfig
                         }
                     }
@@ -900,7 +1009,6 @@
                     "Status": r.isMatch ? 'Cocok' : 'Tidak Cocok'
                 }));
 
-                // Susun dan Unduh Workbook (Excel File)
                 const wb = window.XLSX.utils.book_new();
                 
                 const wsSummary = window.XLSX.utils.json_to_sheet(summaryRows);
@@ -948,7 +1056,7 @@
             // --- Event Listeners ---
             elements.btnAnalyze.addEventListener('click', analyzeData);
             elements.btnReset.addEventListener('click', resetApp);
-            elements.btnExport.addEventListener('click', exportToXLSX); // Dipanggil ke export XLSX
+            elements.btnExport.addEventListener('click', exportToXLSX); 
         });
     </script>
 </body>
