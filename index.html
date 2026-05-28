@@ -345,10 +345,33 @@
             const parseNominal = (val) => {
                 if (typeof val === 'number') return Math.round(val);
                 if (!val || val === '-') return 0;
-                // Jika mengandung koma, anggap sebagai pemisah desimal (misal 100.000,00) -> kita potong koma dkk.
                 const cleanStr = String(val).split(',')[0].replace(/\D/g, ''); 
                 const num = parseInt(cleanStr, 10);
                 return isNaN(num) ? 0 : num;
+            };
+
+            // Parser untuk mengubah Serial Number Excel ke Format Tanggal DD/MM/YYYY
+            const formatExcelDate = (val) => {
+                if (!val) return '-';
+                // Jika sudah berupa teks/string dari excel
+                if (typeof val === 'string') return val.trim();
+                
+                // Jika berupa nomor seri (format bawaan excel untuk tanggal)
+                if (typeof val === 'number') {
+                    // 25569 adalah jumlah hari dari 1 Jan 1900 ke 1 Jan 1970
+                    // -1 hari karena bug leap year bawaan sistem Excel 1900
+                    const excelDays = val - 25569; 
+                    const date = new Date(excelDays * 86400 * 1000);
+                    
+                    // Gunakan metode UTC agar tidak terpengaruh zona waktu komputer lokal
+                    const d = String(date.getUTCDate()).padStart(2, '0');
+                    const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+                    const y = date.getUTCFullYear();
+                    
+                    return `${d}/${m}/${y}`;
+                }
+                
+                return String(val).trim();
             };
 
             const showError = (msg) => {
@@ -442,10 +465,11 @@
                     const row = data[i];
                     if (!row || row.length === 0) continue;
                     
-                    const dateInfo = String(row[1] || '').trim(); 
+                    const rawDate = row[1]; // Ambil data mentah (bisa string atau number)
+                    const dateInfo = formatExcelDate(rawDate); // Konversi ke format yang benar
                     const text = String(row[2] || '').trim(); 
                     const rawNominal = row[4]; 
-                    const numericNominal = parseNominal(rawNominal); // Di-parse ke number murni
+                    const numericNominal = parseNominal(rawNominal); 
                     
                     if (text) results.push({ text, date: dateInfo, rawNominal, numericNominal, used: false });
                 }
