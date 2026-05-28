@@ -213,17 +213,21 @@
                 <!-- Chart Card 1 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
                     <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Proporsi Toko & Marketplace</h3>
-                    <div class="relative w-full aspect-square max-w-[300px]">
+                    <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4">
                         <canvas id="marketplaceChart"></canvas>
                     </div>
+                    <!-- View Kuantiti dan Nominal -->
+                    <div id="legend-marketplace" class="w-full text-xs font-medium space-y-2 border-t pt-4"></div>
                 </div>
 
                 <!-- Chart Card 2 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
                     <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman</h3>
-                    <div class="relative w-full aspect-square max-w-[300px]">
+                    <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4">
                         <canvas id="deliveryChart"></canvas>
                     </div>
+                    <!-- View Kuantiti dan Nominal -->
+                    <div id="legend-delivery" class="w-full text-xs font-medium space-y-2 border-t pt-4"></div>
                 </div>
             </div>
 
@@ -272,8 +276,9 @@
                 </div>
                 
                 <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                    <!-- Tombol diubah agar mengunduh format XLSX -->
                     <button id="btn-export" class="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors shadow-sm">
-                        <i class="fas fa-file-csv"></i> Export Data CSV
+                        <i class="fas fa-file-excel"></i> Export Data XLSX
                     </button>
                 </div>
             </div>
@@ -294,8 +299,8 @@
                     aio: null
                 },
                 results: [],
-                filterStatus: 'all', // all, matched, unmatched
-                filterPlatform: 'all' // all, Shopee, Tokopedia, Online Manual
+                filterStatus: 'all', 
+                filterPlatform: 'all' 
             };
 
             let chartInstanceStore = null;
@@ -329,13 +334,21 @@
 
             // --- UI Helpers ---
             const formatCurrency = (val) => {
-                if (!val || val === '-') return '-';
-                // Jika val adalah angka murni
-                const num = Number(val);
-                if (!isNaN(num)) {
-                    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
+                if (typeof val === 'number') {
+                    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
                 }
-                return val; // Jika format sudah string teks
+                if (!val || val === '-') return '-';
+                return val;
+            };
+
+            // Parser pintar untuk mengambil angka murni dari data nominal apapun
+            const parseNominal = (val) => {
+                if (typeof val === 'number') return Math.round(val);
+                if (!val || val === '-') return 0;
+                // Jika mengandung koma, anggap sebagai pemisah desimal (misal 100.000,00) -> kita potong koma dkk.
+                const cleanStr = String(val).split(',')[0].replace(/\D/g, ''); 
+                const num = parseInt(cleanStr, 10);
+                return isNaN(num) ? 0 : num;
             };
 
             const showError = (msg) => {
@@ -353,13 +366,10 @@
                     const file = e.target.files[0];
                     if (file) {
                         state.files[key] = file;
-                        
-                        // Update UI Label
                         document.getElementById(`label-${key}`).textContent = file.name;
                         document.getElementById(`label-${key}`).title = file.name;
                         document.getElementById(`check-${key}`).classList.remove('hidden-section');
                         
-                        // Khusus UI Icon agar terlihat aktif
                         const iconWrapper = document.getElementById(`icon-${key}`);
                         if(iconWrapper) {
                             if(key.includes('shopee')) {
@@ -402,15 +412,12 @@
 
             const processShopee = (data, storeName) => {
                 const results = [];
-                // Data Shopee: baris 2 = index 1
                 for (let i = 1; i < data.length; i++) {
                     const row = data[i];
                     if (!row || row.length === 0) continue;
-                    
-                    const orderId = String(row[0] || '').trim(); // Kolom 1
+                    const orderId = String(row[0] || '').trim();
                     if (!orderId) continue;
-                    
-                    const delivery = String(row[5] || '').trim(); // Kolom 6
+                    const delivery = String(row[5] || '').trim();
                     results.push({ orderId, platform: 'Shopee', store: storeName, delivery });
                 }
                 return results;
@@ -418,15 +425,12 @@
 
             const processTokopedia = (data, storeName) => {
                 const results = [];
-                // Data Tokopedia: baris 3 = index 2
                 for (let i = 2; i < data.length; i++) {
                     const row = data[i];
                     if (!row || row.length === 0) continue;
-                    
-                    const orderId = String(row[0] || '').trim(); // Kolom 1
+                    const orderId = String(row[0] || '').trim();
                     if (!orderId) continue;
-                    
-                    const delivery = String(row[40] || '').trim(); // Kolom 41
+                    const delivery = String(row[40] || '').trim();
                     results.push({ orderId, platform: 'Tokopedia', store: storeName, delivery });
                 }
                 return results;
@@ -434,16 +438,16 @@
 
             const processAIO = (data) => {
                 const results = [];
-                // Data AIO: baris 2 = index 1
                 for (let i = 1; i < data.length; i++) {
                     const row = data[i];
                     if (!row || row.length === 0) continue;
                     
-                    const dateInfo = String(row[1] || '').trim(); // Kolom 2 (Hari & Tanggal)
-                    const text = String(row[2] || '').trim(); // Kolom 3 (No Pemesanan/Keterangan)
-                    const nominal = String(row[4] || '').trim(); // Kolom 5 (Nominal)
+                    const dateInfo = String(row[1] || '').trim(); 
+                    const text = String(row[2] || '').trim(); 
+                    const rawNominal = row[4]; 
+                    const numericNominal = parseNominal(rawNominal); // Di-parse ke number murni
                     
-                    if (text) results.push({ text, date: dateInfo, nominal, used: false });
+                    if (text) results.push({ text, date: dateInfo, rawNominal, numericNominal, used: false });
                 }
                 return results;
             };
@@ -451,17 +455,13 @@
             const classifyDelivery = (delivery, platform) => {
                 if (!delivery || delivery === '-' || platform === 'Online Manual') return 'Manual/Lainnya';
                 const del = delivery.toLowerCase();
-                
-                // Cek kategori Instan berdasarkan kata kunci
                 if (del.includes('instant') || del.includes('instan')) {
                     return 'Instan';
                 }
-                // Cek kategori Reguler berdasarkan kata kunci
                 if (del.includes('reguler') || del.includes('hemat') || del.includes('standard') || del.includes('standar') || del.includes('kargo') || del.includes('jne') || del.includes('j&t') || del.includes('id express')) {
                     return 'Reguler';
                 }
-                
-                return 'Manual/Lainnya'; // Fallback
+                return 'Manual/Lainnya';
             };
 
             // --- Core Analysis Logic ---
@@ -477,13 +477,11 @@
 
                 hideError();
                 
-                // Loading State UI
                 elements.btnAnalyze.disabled = true;
                 document.getElementById('analyze-icon').className = 'fas fa-spinner fa-spin text-2xl';
                 document.getElementById('analyze-text').textContent = 'Memproses Data...';
 
                 try {
-                    // Baca semua file
                     const [data1, data2, data3, data4, data5] = await Promise.all([
                         readExcel(state.files.shopeeBali),
                         readExcel(state.files.shopeeGo),
@@ -493,7 +491,6 @@
                     ]);
 
                     let combinedOrders = [];
-                    
                     if (data1.length) combinedOrders = combinedOrders.concat(processShopee(data1, 'Bali Stationery'));
                     if (data2.length) combinedOrders = combinedOrders.concat(processShopee(data2, 'GoMall'));
                     if (data3.length) combinedOrders = combinedOrders.concat(processTokopedia(data3, 'Bali Stationery'));
@@ -504,18 +501,17 @@
 
                     // 1. Pencocokan Data Shopee & Tokopedia
                     combinedOrders.forEach(order => {
-                        // Cari di AIO (Cek teks AIO mengandung Order ID)
                         const matchedAio = aioRecords.find(aio => !aio.used && aio.text.includes(order.orderId));
-                        
                         const deliveryCategory = classifyDelivery(order.delivery, order.platform);
 
                         if (matchedAio) {
-                            matchedAio.used = true; // Tandai agar tidak dipakai ganda
+                            matchedAio.used = true;
                             finalResults.push({
                                 ...order,
                                 isMatch: true,
                                 date: matchedAio.date,
-                                nominal: matchedAio.nominal,
+                                rawNominal: matchedAio.rawNominal,
+                                numericNominal: matchedAio.numericNominal,
                                 deliveryCategory
                             });
                         } else {
@@ -523,7 +519,8 @@
                                 ...order,
                                 isMatch: false,
                                 date: '-',
-                                nominal: '-',
+                                rawNominal: '-',
+                                numericNominal: 0,
                                 deliveryCategory
                             });
                         }
@@ -539,7 +536,8 @@
                                 delivery: 'Manual',
                                 isMatch: true, 
                                 date: aio.date,
-                                nominal: aio.nominal,
+                                rawNominal: aio.rawNominal,
+                                numericNominal: aio.numericNominal,
                                 deliveryCategory: 'Manual/Lainnya'
                             });
                         }
@@ -551,7 +549,6 @@
 
                     state.results = finalResults;
 
-                    // Render UI
                     elements.uploadSection.classList.add('hidden-section');
                     elements.resultsSection.classList.remove('hidden-section');
                     elements.btnReset.classList.remove('hidden-section');
@@ -574,17 +571,86 @@
                 const ctxStore = document.getElementById('marketplaceChart').getContext('2d');
                 const ctxDelivery = document.getElementById('deliveryChart').getContext('2d');
                 
-                // Data Store Breakdown
-                const shopeeBali = data.filter(d => d.platform === 'Shopee' && d.store === 'Bali Stationery').length;
-                const shopeeGo = data.filter(d => d.platform === 'Shopee' && d.store === 'GoMall').length;
-                const tokoBali = data.filter(d => d.platform === 'Tokopedia' && d.store === 'Bali Stationery').length;
-                const tokoGo = data.filter(d => d.platform === 'Tokopedia' && d.store === 'GoMall').length;
-                const manualCount = data.filter(d => d.platform === 'Online Manual').length;
+                // Helper Hitung Agregasi
+                const aggregateStore = (platform, store) => {
+                    const filtered = data.filter(d => platform === 'Online Manual' ? d.platform === 'Online Manual' : (d.platform === platform && d.store === store));
+                    return {
+                        count: filtered.length,
+                        nominal: filtered.reduce((sum, d) => sum + (d.numericNominal || 0), 0)
+                    };
+                };
 
-                // Data Delivery Breakdown
-                const instan = data.filter(d => d.deliveryCategory === 'Instan').length;
-                const reguler = data.filter(d => d.deliveryCategory === 'Reguler').length;
-                const manualDeliv = data.filter(d => d.deliveryCategory === 'Manual/Lainnya').length;
+                const aggregateDelivery = (category) => {
+                    const filtered = data.filter(d => d.deliveryCategory === category);
+                    return {
+                        count: filtered.length,
+                        nominal: filtered.reduce((sum, d) => sum + (d.numericNominal || 0), 0)
+                    };
+                };
+
+                // Store Data
+                const sBali = aggregateStore('Shopee', 'Bali Stationery');
+                const sGo = aggregateStore('Shopee', 'GoMall');
+                const tBali = aggregateStore('Tokopedia', 'Bali Stationery');
+                const tGo = aggregateStore('Tokopedia', 'GoMall');
+                const manual = aggregateStore('Online Manual', null);
+
+                // Delivery Data
+                const instan = aggregateDelivery('Instan');
+                const reguler = aggregateDelivery('Reguler');
+                const manualDeliv = aggregateDelivery('Manual/Lainnya');
+
+                // Render HTML Legends / View Total Kuantiti & Nominal
+                document.getElementById('legend-marketplace').innerHTML = `
+                    <div class="flex justify-between items-center bg-orange-50 p-2 rounded text-orange-800">
+                        <span><i class="fas fa-circle text-[8px] mr-1 text-[#ea580c]"></i> Shopee Balistationery</span> 
+                        <span class="text-right"><b>${sBali.count}</b> trx<br><span class="text-orange-600">${formatCurrency(sBali.nominal)}</span></span>
+                    </div>
+                    <div class="flex justify-between items-center bg-orange-50/50 p-2 rounded text-orange-800">
+                        <span><i class="fas fa-circle text-[8px] mr-1 text-[#fb923c]"></i> Shopee Gomall</span> 
+                        <span class="text-right"><b>${sGo.count}</b> trx<br><span class="text-orange-600">${formatCurrency(sGo.nominal)}</span></span>
+                    </div>
+                    <div class="flex justify-between items-center bg-green-50 p-2 rounded text-green-800">
+                        <span><i class="fas fa-circle text-[8px] mr-1 text-[#16a34a]"></i> Toped Balistationery</span> 
+                        <span class="text-right"><b>${tBali.count}</b> trx<br><span class="text-green-600">${formatCurrency(tBali.nominal)}</span></span>
+                    </div>
+                    <div class="flex justify-between items-center bg-green-50/50 p-2 rounded text-green-800">
+                        <span><i class="fas fa-circle text-[8px] mr-1 text-[#4ade80]"></i> Toped Gomall</span> 
+                        <span class="text-right"><b>${tGo.count}</b> trx<br><span class="text-green-600">${formatCurrency(tGo.nominal)}</span></span>
+                    </div>
+                    <div class="flex justify-between items-center bg-blue-50 p-2 rounded text-blue-800">
+                        <span><i class="fas fa-circle text-[8px] mr-1 text-[#3b82f6]"></i> Online Manual</span> 
+                        <span class="text-right"><b>${manual.count}</b> trx<br><span class="text-blue-600">${formatCurrency(manual.nominal)}</span></span>
+                    </div>
+                `;
+
+                document.getElementById('legend-delivery').innerHTML = `
+                    <div class="flex justify-between items-center bg-red-50 p-2 rounded text-red-800">
+                        <span><i class="fas fa-circle text-[8px] mr-1 text-[#ef4444]"></i> Instan</span> 
+                        <span class="text-right"><b>${instan.count}</b> trx<br><span class="text-red-600">${formatCurrency(instan.nominal)}</span></span>
+                    </div>
+                    <div class="flex justify-between items-center bg-yellow-50 p-2 rounded text-yellow-800">
+                        <span><i class="fas fa-circle text-[8px] mr-1 text-[#eab308]"></i> Reguler</span> 
+                        <span class="text-right"><b>${reguler.count}</b> trx<br><span class="text-yellow-600">${formatCurrency(reguler.nominal)}</span></span>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-100 p-2 rounded text-gray-700">
+                        <span><i class="fas fa-circle text-[8px] mr-1 text-[#9ca3af]"></i> Manual / Lainnya</span> 
+                        <span class="text-right"><b>${manualDeliv.count}</b> trx<br><span class="text-gray-500">${formatCurrency(manualDeliv.nominal)}</span></span>
+                    </div>
+                `;
+
+                // Tooltip Config yang menampilkan Nominal
+                const tooltipConfig = {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const count = context.raw;
+                            const nominals = context.dataset.nominals;
+                            const nominal = nominals ? nominals[context.dataIndex] : 0;
+                            return ` ${label}: ${count} Trx (Rp ${new Intl.NumberFormat('id-ID').format(nominal)})`;
+                        }
+                    }
+                };
 
                 if (chartInstanceStore) chartInstanceStore.destroy();
                 if (chartInstanceDelivery) chartInstanceDelivery.destroy();
@@ -594,14 +660,9 @@
                     data: {
                         labels: ['Shopee Balistationery', 'Shopee Gomall', 'Toped Balistationery', 'Toped Gomall', 'Online Manual'],
                         datasets: [{
-                            data: [shopeeBali, shopeeGo, tokoBali, tokoGo, manualCount],
-                            backgroundColor: [
-                                '#ea580c', // Orange (Shopee Bali)
-                                '#fb923c', // Lighter Orange (Shopee GoMall)
-                                '#16a34a', // Green (Toped Bali)
-                                '#4ade80', // Lighter Green (Toped GoMall)
-                                '#3b82f6'  // Blue (Manual)
-                            ],
+                            data: [sBali.count, sGo.count, tBali.count, tGo.count, manual.count],
+                            nominals: [sBali.nominal, sGo.nominal, tBali.nominal, tGo.nominal, manual.nominal], // Custom dataset array
+                            backgroundColor: ['#ea580c', '#fb923c', '#16a34a', '#4ade80', '#3b82f6'],
                             borderWidth: 2,
                             borderColor: '#ffffff',
                             hoverOffset: 4
@@ -611,14 +672,8 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    usePointStyle: true,
-                                    padding: 15,
-                                    font: { family: "'Inter', sans-serif", weight: '600', size: 11 }
-                                }
-                            }
+                            legend: { display: false }, // Disembunyikan karena sudah ada custom HTML legend
+                            tooltip: tooltipConfig
                         },
                         cutout: '60%'
                     }
@@ -629,12 +684,9 @@
                     data: {
                         labels: ['Instan', 'Reguler', 'Manual / Lainnya'],
                         datasets: [{
-                            data: [instan, reguler, manualDeliv],
-                            backgroundColor: [
-                                '#ef4444', // Red (Instan)
-                                '#eab308', // Yellow (Reguler)
-                                '#9ca3af'  // Gray (Manual)
-                            ],
+                            data: [instan.count, reguler.count, manualDeliv.count],
+                            nominals: [instan.nominal, reguler.nominal, manualDeliv.nominal], // Custom dataset array
+                            backgroundColor: ['#ef4444', '#eab308', '#9ca3af'],
                             borderWidth: 2,
                             borderColor: '#ffffff',
                             hoverOffset: 4
@@ -644,14 +696,8 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    usePointStyle: true,
-                                    padding: 15,
-                                    font: { family: "'Inter', sans-serif", weight: '600', size: 12 }
-                                }
-                            }
+                            legend: { display: false }, // Disembunyikan karena sudah ada custom HTML legend
+                            tooltip: tooltipConfig
                         }
                     }
                 });
@@ -661,7 +707,6 @@
             const renderTable = () => {
                 const { results, filterStatus, filterPlatform } = state;
                 
-                // Hitung statistik (Total Keseluruhan Tanpa Filter)
                 const total = results.length;
                 const matched = results.filter(r => r.isMatch).length;
                 const unmatched = total - matched;
@@ -670,21 +715,17 @@
                 elements.counts.matched.textContent = matched;
                 elements.counts.unmatched.textContent = unmatched;
 
-                // Terapkan filter berlapis
                 const filteredData = results.filter(r => {
-                    // Cek Filter Status
                     let passStatus = true;
                     if (filterStatus === 'matched') passStatus = r.isMatch;
                     if (filterStatus === 'unmatched') passStatus = !r.isMatch;
                     
-                    // Cek Filter Platform
                     let passPlatform = true;
                     if (filterPlatform !== 'all') passPlatform = r.platform === filterPlatform;
 
                     return passStatus && passPlatform;
                 });
 
-                // Buat HTML Tabel
                 if (filteredData.length === 0) {
                     elements.tbody.innerHTML = `
                         <tr>
@@ -717,7 +758,7 @@
                             <td class="py-3 px-4 text-gray-600 text-sm whitespace-nowrap">${row.date}</td>
                             <td class="py-3 px-4">${platformBadge}</td>
                             <td class="py-3 px-4 text-gray-600 font-medium">${row.store}</td>
-                            <td class="py-3 px-4 text-gray-900 font-bold text-right whitespace-nowrap">${formatCurrency(row.nominal)}</td>
+                            <td class="py-3 px-4 text-gray-900 font-bold text-right whitespace-nowrap">${formatCurrency(row.numericNominal)}</td>
                             <td class="py-3 px-4 text-gray-600">${row.delivery || '-'}</td>
                             <td class="py-3 px-4 text-center">${statusBadge}</td>
                         </tr>
@@ -726,14 +767,11 @@
             };
 
             // --- Filter Event Listeners ---
-            
-            // Platform Filter
             elements.platformBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const target = e.currentTarget;
                     state.filterPlatform = target.dataset.platform;
                     
-                    // Reset all styles
                     elements.platformBtns.forEach(b => {
                         b.className = b.dataset.platform === 'Shopee' ? 'platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-orange-600 border border-orange-200 hover:bg-orange-50' : 
                                       b.dataset.platform === 'Tokopedia' ? 'platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-green-600 border border-green-200 hover:bg-green-50' :
@@ -741,7 +779,6 @@
                                       'platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white text-gray-700 border border-gray-200 hover:bg-gray-50';
                     });
                     
-                    // Set active style
                     if(state.filterPlatform === 'all') {
                         target.className = 'platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-gray-800 text-white shadow-sm';
                     } else if (state.filterPlatform === 'Shopee') {
@@ -751,12 +788,10 @@
                     } else {
                         target.className = 'platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-blue-500 text-white shadow-sm';
                     }
-
                     renderTable();
                 });
             });
 
-            // Status Filter
             elements.statusBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const target = e.currentTarget;
@@ -771,8 +806,8 @@
                 });
             });
 
-            // --- Export CSV Logic ---
-            const exportToCSV = () => {
+            // --- Export XLSX Logic Native SheetJS ---
+            const exportToXLSX = () => {
                 if (!state.results || state.results.length === 0) return;
                 
                 const filteredData = state.results.filter(r => {
@@ -786,39 +821,80 @@
                     return passStatus && passPlatform;
                 });
 
-                const headers = ["No Pemesanan", "Tanggal AIO", "Platform", "Toko", "Nominal AIO", "Layanan Pengiriman", "Status"];
-                const rows = filteredData.map(r => [
-                    r.orderId,
-                    r.date,
-                    r.platform,
-                    r.store,
-                    r.nominal,
-                    r.delivery,
-                    r.isMatch ? 'Cocok' : 'Tidak Cocok'
-                ]);
+                // 1. Buat Data Ringkasan Harian
+                const summaryMap = {};
+                filteredData.forEach(r => {
+                    const dateStr = (r.date && r.date !== '-') ? String(r.date) : 'Tanpa Tanggal / Belum Masuk AIO';
+                    if (!summaryMap[dateStr]) {
+                        summaryMap[dateStr] = {
+                            date: dateStr,
+                            instanCount: 0, instanNominal: 0,
+                            regulerCount: 0, regulerNominal: 0,
+                            manualCount: 0, manualNominal: 0
+                        };
+                    }
+                    
+                    const nom = r.numericNominal || 0;
+                    if (r.deliveryCategory === 'Instan') {
+                        summaryMap[dateStr].instanCount++;
+                        summaryMap[dateStr].instanNominal += nom;
+                    } else if (r.deliveryCategory === 'Reguler') {
+                        summaryMap[dateStr].regulerCount++;
+                        summaryMap[dateStr].regulerNominal += nom;
+                    } else { // Manual/Lainnya
+                        summaryMap[dateStr].manualCount++;
+                        summaryMap[dateStr].manualNominal += nom;
+                    }
+                });
+
+                // Susun baris XLSX sesuai format yang diminta
+                const summaryRows = Object.values(summaryMap).map(row => {
+                    const allCount = row.instanCount + row.regulerCount + row.manualCount;
+                    const allNominal = row.instanNominal + row.regulerNominal + row.manualNominal;
+                    return {
+                        "hari/Tanggal": row.date,
+                        "TRANSAKSI INSTAN": row.instanCount,
+                        "TOTAL INSTAN": row.instanNominal,
+                        "TRANSAKSI REGULER": row.regulerCount,
+                        "TOTAL REGULER": row.regulerNominal,
+                        "TRANSAKSI MANUAL": row.manualCount,
+                        "TOTAL MANUAL": row.manualNominal,
+                        "TRANSAKSI ALL": allCount,
+                        "TOTAL ALL": allNominal
+                    };
+                });
+
+                // 2. Buat Data Rincian Detail
+                const detailRows = filteredData.map(r => ({
+                    "No Pemesanan": r.orderId,
+                    "Tanggal AIO": r.date,
+                    "Platform": r.platform,
+                    "Toko": r.store,
+                    "Layanan Pengiriman": r.delivery,
+                    "Kategori Layanan": r.deliveryCategory,
+                    "Nominal AIO": r.numericNominal || 0,
+                    "Status": r.isMatch ? 'Cocok' : 'Tidak Cocok'
+                }));
+
+                // Susun dan Unduh Workbook (Excel File)
+                const wb = window.XLSX.utils.book_new();
                 
-                let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
-                // Escape commas within strings
-                csvContent += rows.map(e => e.map(item => `"${String(item).replace(/"/g, '""')}"`).join(",")).join("\n");
+                const wsSummary = window.XLSX.utils.json_to_sheet(summaryRows);
+                window.XLSX.utils.book_append_sheet(wb, wsSummary, "Ringkasan Harian");
                 
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "Laporan_Penjualan_Marketplace_AIO.csv");
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                const wsDetail = window.XLSX.utils.json_to_sheet(detailRows);
+                window.XLSX.utils.book_append_sheet(wb, wsDetail, "Data Detail");
+                
+                window.XLSX.writeFile(wb, "Laporan_Penjualan_Marketplace_AIO.xlsx");
             };
 
             // --- Reset Logic ---
             const resetApp = () => {
-                // Reset state
                 state.files = { shopeeBali: null, shopeeGo: null, tokoBali: null, tokoGo: null, aio: null };
                 state.results = [];
                 state.filterStatus = 'all';
                 state.filterPlatform = 'all';
                 
-                // Reset UI inputs
                 Object.keys(state.files).forEach(key => {
                     elements.inputs[key].value = '';
                     document.getElementById(`label-${key}`).textContent = key === 'aio' ? 'Pilih File Data AIO .xlsx' : 'Pilih File .xlsx';
@@ -836,11 +912,9 @@
                     }
                 });
 
-                // Reset Filters UI
-                elements.platformBtns[0].click(); // Click 'Semua' platform
-                elements.statusBtns[0].click();   // Click 'Semua' status
+                elements.platformBtns[0].click(); 
+                elements.statusBtns[0].click();   
 
-                // Toggle Sections
                 elements.uploadSection.classList.remove('hidden-section');
                 elements.resultsSection.classList.add('hidden-section');
                 elements.btnReset.classList.add('hidden-section');
@@ -850,7 +924,7 @@
             // --- Event Listeners ---
             elements.btnAnalyze.addEventListener('click', analyzeData);
             elements.btnReset.addEventListener('click', resetApp);
-            elements.btnExport.addEventListener('click', exportToCSV);
+            elements.btnExport.addEventListener('click', exportToXLSX); // Dipanggil ke export XLSX
         });
     </script>
 </body>
