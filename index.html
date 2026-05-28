@@ -182,39 +182,47 @@
         <!-- Results Section -->
         <div id="results-section" class="hidden-section space-y-6">
             
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Chart Card -->
-                <div class="lg:col-span-1 bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Perbandingan Marketplace</h3>
-                    <div class="relative w-full aspect-square max-w-[280px]">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl shadow-sm border border-blue-100 flex flex-col justify-center">
+                    <div class="flex items-center gap-4 mb-2">
+                        <div class="bg-blue-100 p-3 rounded-xl text-blue-600"><i class="fas fa-receipt text-xl"></i></div>
+                        <p class="text-gray-600 font-semibold">Total Semua Pesanan</p>
+                    </div>
+                    <h3 id="count-total" class="text-4xl font-bold text-blue-900 ml-16">0</h3>
+                </div>
+                
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl shadow-sm border border-green-100 flex flex-col justify-center">
+                    <div class="flex items-center gap-4 mb-2">
+                        <div class="bg-green-100 p-3 rounded-xl text-green-600"><i class="fas fa-check-circle text-xl"></i></div>
+                        <p class="text-gray-600 font-semibold">Data Cocok & Manual</p>
+                    </div>
+                    <h3 id="count-matched" class="text-4xl font-bold text-green-700 ml-16">0</h3>
+                </div>
+
+                <div class="bg-gradient-to-br from-red-50 to-rose-50 p-6 rounded-2xl shadow-sm border border-red-100 flex flex-col justify-center">
+                    <div class="flex items-center gap-4 mb-2">
+                        <div class="bg-red-100 p-3 rounded-xl text-red-600"><i class="fas fa-times-circle text-xl"></i></div>
+                        <p class="text-gray-600 font-semibold">Data Tidak Cocok</p>
+                    </div>
+                    <h3 id="count-unmatched" class="text-4xl font-bold text-red-700 ml-16">0</h3>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Chart Card 1 -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Proporsi Toko & Marketplace</h3>
+                    <div class="relative w-full aspect-square max-w-[300px]">
                         <canvas id="marketplaceChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Summary Cards -->
-                <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl shadow-sm border border-blue-100 flex flex-col justify-center">
-                        <div class="flex items-center gap-4 mb-2">
-                            <div class="bg-blue-100 p-3 rounded-xl text-blue-600"><i class="fas fa-receipt text-xl"></i></div>
-                            <p class="text-gray-600 font-semibold">Total Semua Pesanan</p>
-                        </div>
-                        <h3 id="count-total" class="text-4xl font-bold text-blue-900 ml-16">0</h3>
-                    </div>
-                    
-                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl shadow-sm border border-green-100 flex flex-col justify-center">
-                        <div class="flex items-center gap-4 mb-2">
-                            <div class="bg-green-100 p-3 rounded-xl text-green-600"><i class="fas fa-check-circle text-xl"></i></div>
-                            <p class="text-gray-600 font-semibold">Data Cocok & Manual</p>
-                        </div>
-                        <h3 id="count-matched" class="text-4xl font-bold text-green-700 ml-16">0</h3>
-                    </div>
-
-                    <div class="bg-gradient-to-br from-red-50 to-rose-50 p-6 rounded-2xl shadow-sm border border-red-100 flex flex-col justify-center sm:col-span-2">
-                        <div class="flex items-center gap-4 mb-2">
-                            <div class="bg-red-100 p-3 rounded-xl text-red-600"><i class="fas fa-times-circle text-xl"></i></div>
-                            <p class="text-gray-600 font-semibold">Data Tidak Cocok (Belum Masuk AIO)</p>
-                        </div>
-                        <h3 id="count-unmatched" class="text-4xl font-bold text-red-700 ml-16">0</h3>
+                <!-- Chart Card 2 -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman</h3>
+                    <div class="relative w-full aspect-square max-w-[300px]">
+                        <canvas id="deliveryChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -290,7 +298,8 @@
                 filterPlatform: 'all' // all, Shopee, Tokopedia, Online Manual
             };
 
-            let chartInstance = null;
+            let chartInstanceStore = null;
+            let chartInstanceDelivery = null;
 
             // Elements
             const elements = {
@@ -439,6 +448,22 @@
                 return results;
             };
 
+            const classifyDelivery = (delivery, platform) => {
+                if (!delivery || delivery === '-' || platform === 'Online Manual') return 'Manual/Lainnya';
+                const del = delivery.toLowerCase();
+                
+                // Cek kategori Instan berdasarkan kata kunci
+                if (del.includes('instant') || del.includes('instan')) {
+                    return 'Instan';
+                }
+                // Cek kategori Reguler berdasarkan kata kunci
+                if (del.includes('reguler') || del.includes('hemat') || del.includes('standard') || del.includes('standar') || del.includes('kargo') || del.includes('jne') || del.includes('j&t') || del.includes('id express')) {
+                    return 'Reguler';
+                }
+                
+                return 'Manual/Lainnya'; // Fallback
+            };
+
             // --- Core Analysis Logic ---
             const analyzeData = async () => {
                 if (typeof window.XLSX === 'undefined') {
@@ -482,20 +507,24 @@
                         // Cari di AIO (Cek teks AIO mengandung Order ID)
                         const matchedAio = aioRecords.find(aio => !aio.used && aio.text.includes(order.orderId));
                         
+                        const deliveryCategory = classifyDelivery(order.delivery, order.platform);
+
                         if (matchedAio) {
                             matchedAio.used = true; // Tandai agar tidak dipakai ganda
                             finalResults.push({
                                 ...order,
                                 isMatch: true,
                                 date: matchedAio.date,
-                                nominal: matchedAio.nominal
+                                nominal: matchedAio.nominal,
+                                deliveryCategory
                             });
                         } else {
                             finalResults.push({
                                 ...order,
                                 isMatch: false,
                                 date: '-',
-                                nominal: '-'
+                                nominal: '-',
+                                deliveryCategory
                             });
                         }
                     });
@@ -510,7 +539,8 @@
                                 delivery: 'Manual',
                                 isMatch: true, 
                                 date: aio.date,
-                                nominal: aio.nominal
+                                nominal: aio.nominal,
+                                deliveryCategory: 'Manual/Lainnya'
                             });
                         }
                     });
@@ -541,28 +571,39 @@
 
             // --- Chart Logic ---
             const updateChart = (data) => {
-                const ctx = document.getElementById('marketplaceChart').getContext('2d');
+                const ctxStore = document.getElementById('marketplaceChart').getContext('2d');
+                const ctxDelivery = document.getElementById('deliveryChart').getContext('2d');
                 
-                const shopeeCount = data.filter(d => d.platform === 'Shopee').length;
-                const tokoCount = data.filter(d => d.platform === 'Tokopedia').length;
+                // Data Store Breakdown
+                const shopeeBali = data.filter(d => d.platform === 'Shopee' && d.store === 'Bali Stationery').length;
+                const shopeeGo = data.filter(d => d.platform === 'Shopee' && d.store === 'GoMall').length;
+                const tokoBali = data.filter(d => d.platform === 'Tokopedia' && d.store === 'Bali Stationery').length;
+                const tokoGo = data.filter(d => d.platform === 'Tokopedia' && d.store === 'GoMall').length;
                 const manualCount = data.filter(d => d.platform === 'Online Manual').length;
 
-                if (chartInstance) {
-                    chartInstance.destroy();
-                }
+                // Data Delivery Breakdown
+                const instan = data.filter(d => d.deliveryCategory === 'Instan').length;
+                const reguler = data.filter(d => d.deliveryCategory === 'Reguler').length;
+                const manualDeliv = data.filter(d => d.deliveryCategory === 'Manual/Lainnya').length;
 
-                chartInstance = new Chart(ctx, {
+                if (chartInstanceStore) chartInstanceStore.destroy();
+                if (chartInstanceDelivery) chartInstanceDelivery.destroy();
+
+                chartInstanceStore = new Chart(ctxStore, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Shopee', 'Tokopedia', 'Manual'],
+                        labels: ['Shopee Balistationery', 'Shopee Gomall', 'Toped Balistationery', 'Toped Gomall', 'Online Manual'],
                         datasets: [{
-                            data: [shopeeCount, tokoCount, manualCount],
+                            data: [shopeeBali, shopeeGo, tokoBali, tokoGo, manualCount],
                             backgroundColor: [
-                                '#f97316', // Orange
-                                '#22c55e', // Green
-                                '#3b82f6'  // Blue
+                                '#ea580c', // Orange (Shopee Bali)
+                                '#fb923c', // Lighter Orange (Shopee GoMall)
+                                '#16a34a', // Green (Toped Bali)
+                                '#4ade80', // Lighter Green (Toped GoMall)
+                                '#3b82f6'  // Blue (Manual)
                             ],
-                            borderWidth: 0,
+                            borderWidth: 2,
+                            borderColor: '#ffffff',
                             hoverOffset: 4
                         }]
                     },
@@ -574,12 +615,44 @@
                                 position: 'bottom',
                                 labels: {
                                     usePointStyle: true,
-                                    padding: 20,
-                                    font: { family: "'Inter', sans-serif", weight: 'bold' }
+                                    padding: 15,
+                                    font: { family: "'Inter', sans-serif", weight: '600', size: 11 }
                                 }
                             }
                         },
-                        cutout: '65%'
+                        cutout: '60%'
+                    }
+                });
+
+                chartInstanceDelivery = new Chart(ctxDelivery, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Instan', 'Reguler', 'Manual / Lainnya'],
+                        datasets: [{
+                            data: [instan, reguler, manualDeliv],
+                            backgroundColor: [
+                                '#ef4444', // Red (Instan)
+                                '#eab308', // Yellow (Reguler)
+                                '#9ca3af'  // Gray (Manual)
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#ffffff',
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 15,
+                                    font: { family: "'Inter', sans-serif", weight: '600', size: 12 }
+                                }
+                            }
+                        }
                     }
                 });
             };
