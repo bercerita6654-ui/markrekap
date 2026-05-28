@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisa Penjualan AIO</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SheetJS (XLSX) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        /* Custom scrollbar for table */
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        
+        .hidden-section {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 min-h-screen p-6">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+        
+        <!-- Header -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="bg-blue-600 p-3 rounded-xl text-white">
+                    <i class="fas fa-chart-bar text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Analisa Penjualan AIO</h1>
+                    <p class="text-sm text-gray-500">Cocokkan data Shopee & Tokopedia dengan Data AIO secara otomatis.</p>
+                </div>
+            </div>
+            <button id="btn-reset" class="hidden-section flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors">
+                <i class="fas fa-sync-alt"></i> Mulai Ulang
+            </button>
+        </div>
+
+        <!-- Error Message Container -->
+        <div id="error-container" class="hidden-section bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex items-center gap-3">
+            <i class="fas fa-exclamation-circle text-red-500"></i>
+            <p id="error-text" class="text-red-700 text-sm font-medium"></p>
+        </div>
+
+        <!-- Upload Section -->
+        <div id="upload-section" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- Data 1 -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-start gap-2 relative overflow-hidden transition-all hover:shadow-md">
+                    <div class="flex items-center gap-3 w-full">
+                        <div class="p-3 rounded-lg bg-blue-50 text-blue-500" id="icon-shopeeBali">
+                            <i class="fas fa-file-excel text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-800">Data 1: Shopee</h3>
+                            <p class="text-xs text-gray-500">Bali Stationery</p>
+                        </div>
+                    </div>
+                    <label class="mt-2 w-full cursor-pointer flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg border border-dashed border-gray-300 text-sm font-medium transition-colors">
+                        <i class="fas fa-upload"></i>
+                        <span id="label-shopeeBali" class="truncate max-w-[120px]">Pilih File .xlsx</span>
+                        <input type="file" id="file-shopeeBali" accept=".xlsx" class="hidden" />
+                    </label>
+                    <div id="check-shopeeBali" class="hidden-section absolute top-2 right-2 text-green-500">
+                        <i class="fas fa-check-circle text-lg"></i>
+                    </div>
+                </div>
+
+                <!-- Data 2 -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-start gap-2 relative overflow-hidden transition-all hover:shadow-md">
+                    <div class="flex items-center gap-3 w-full">
+                        <div class="p-3 rounded-lg bg-blue-50 text-blue-500" id="icon-shopeeGo">
+                            <i class="fas fa-file-excel text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-800">Data 2: Shopee</h3>
+                            <p class="text-xs text-gray-500">GoMall</p>
+                        </div>
+                    </div>
+                    <label class="mt-2 w-full cursor-pointer flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg border border-dashed border-gray-300 text-sm font-medium transition-colors">
+                        <i class="fas fa-upload"></i>
+                        <span id="label-shopeeGo" class="truncate max-w-[120px]">Pilih File .xlsx</span>
+                        <input type="file" id="file-shopeeGo" accept=".xlsx" class="hidden" />
+                    </label>
+                    <div id="check-shopeeGo" class="hidden-section absolute top-2 right-2 text-green-500">
+                        <i class="fas fa-check-circle text-lg"></i>
+                    </div>
+                </div>
+
+                <!-- Data 3 -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-start gap-2 relative overflow-hidden transition-all hover:shadow-md">
+                    <div class="flex items-center gap-3 w-full">
+                        <div class="p-3 rounded-lg bg-blue-50 text-blue-500" id="icon-tokoBali">
+                            <i class="fas fa-file-excel text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-800">Data 3: Tokopedia</h3>
+                            <p class="text-xs text-gray-500">Bali Stationery</p>
+                        </div>
+                    </div>
+                    <label class="mt-2 w-full cursor-pointer flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg border border-dashed border-gray-300 text-sm font-medium transition-colors">
+                        <i class="fas fa-upload"></i>
+                        <span id="label-tokoBali" class="truncate max-w-[120px]">Pilih File .xlsx</span>
+                        <input type="file" id="file-tokoBali" accept=".xlsx" class="hidden" />
+                    </label>
+                    <div id="check-tokoBali" class="hidden-section absolute top-2 right-2 text-green-500">
+                        <i class="fas fa-check-circle text-lg"></i>
+                    </div>
+                </div>
+
+                <!-- Data 4 -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-start gap-2 relative overflow-hidden transition-all hover:shadow-md">
+                    <div class="flex items-center gap-3 w-full">
+                        <div class="p-3 rounded-lg bg-blue-50 text-blue-500" id="icon-tokoGo">
+                            <i class="fas fa-file-excel text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-800">Data 4: Tokopedia</h3>
+                            <p class="text-xs text-gray-500">GoMall</p>
+                        </div>
+                    </div>
+                    <label class="mt-2 w-full cursor-pointer flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg border border-dashed border-gray-300 text-sm font-medium transition-colors">
+                        <i class="fas fa-upload"></i>
+                        <span id="label-tokoGo" class="truncate max-w-[120px]">Pilih File .xlsx</span>
+                        <input type="file" id="file-tokoGo" accept=".xlsx" class="hidden" />
+                    </label>
+                    <div id="check-tokoGo" class="hidden-section absolute top-2 right-2 text-green-500">
+                        <i class="fas fa-check-circle text-lg"></i>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-blue-50/50 p-6 rounded-xl border border-blue-100 flex flex-col items-center justify-center text-center relative">
+                    <h3 class="font-bold text-blue-900 mb-1">Data 5: Penjualan (Master)</h3>
+                    <p class="text-sm text-blue-700 mb-4">Upload Data AIO sebagai acuan pencocokan.</p>
+                    <label class="cursor-pointer flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold transition-colors shadow-sm w-full max-w-sm">
+                        <i class="fas fa-upload"></i>
+                        <span id="label-aio" class="truncate max-w-[200px]">Pilih File Data AIO .xlsx</span>
+                        <input type="file" id="file-aio" accept=".xlsx" class="hidden" />
+                    </label>
+                    <div id="check-aio" class="hidden-section absolute top-4 right-4 text-green-500">
+                        <i class="fas fa-check-circle text-2xl"></i>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-center p-4">
+                    <button id="btn-analyze" class="w-full max-w-sm py-4 px-6 rounded-xl font-bold text-white shadow-lg transition-all bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        <i id="analyze-icon" class="fas fa-check-circle text-xl"></i>
+                        <span id="analyze-text">Mulai Analisis Data</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="hidden-section space-y-6">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div class="bg-blue-100 p-4 rounded-full text-blue-600"><i class="fas fa-file-excel text-2xl"></i></div>
+                    <div>
+                        <p class="text-sm text-gray-500 font-medium">Total Pesanan Diperiksa</p>
+                        <h3 id="count-total" class="text-3xl font-bold text-gray-900">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div class="bg-green-100 p-4 rounded-full text-green-600"><i class="fas fa-check-circle text-2xl"></i></div>
+                    <div>
+                        <p class="text-sm text-gray-500 font-medium">Data Cocok (Ditemukan)</p>
+                        <h3 id="count-matched" class="text-3xl font-bold text-green-600">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div class="bg-red-100 p-4 rounded-full text-red-600"><i class="fas fa-times-circle text-2xl"></i></div>
+                    <div>
+                        <p class="text-sm text-gray-500 font-medium">Data Tidak Cocok</p>
+                        <h3 id="count-unmatched" class="text-3xl font-bold text-red-600">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/50">
+                    <div class="flex flex-wrap gap-2">
+                        <button id="btn-filter-all" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-blue-600 text-white" data-filter="all">Semua Data</button>
+                        <button id="btn-filter-matched" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-white text-gray-600 border border-gray-200 hover:bg-gray-50" data-filter="matched">Hanya Cocok</button>
+                        <button id="btn-filter-unmatched" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-white text-gray-600 border border-gray-200 hover:bg-gray-50" data-filter="unmatched">Tidak Cocok</button>
+                    </div>
+                    <button id="btn-export" class="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-medium hover:bg-indigo-100 transition-colors">
+                        <i class="fas fa-download"></i> Export CSV
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto table-container max-h-[500px] overflow-y-auto">
+                    <table class="w-full text-left border-collapse relative">
+                        <thead class="sticky top-0 z-10 bg-gray-50 shadow-sm">
+                            <tr class="text-gray-600 text-sm border-b border-gray-200">
+                                <th class="py-3 px-4 font-semibold whitespace-nowrap">No Pemesanan</th>
+                                <th class="py-3 px-4 font-semibold whitespace-nowrap">Platform</th>
+                                <th class="py-3 px-4 font-semibold whitespace-nowrap">Nama Toko</th>
+                                <th class="py-3 px-4 font-semibold whitespace-nowrap">Layanan Pengiriman</th>
+                                <th class="py-3 px-4 font-semibold text-center whitespace-nowrap">Status AIO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="divide-y divide-gray-100">
+                            <!-- Rows will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // State
+            const state = {
+                files: {
+                    shopeeBali: null,
+                    shopeeGo: null,
+                    tokoBali: null,
+                    tokoGo: null,
+                    aio: null
+                },
+                results: [],
+                filter: 'all' // all, matched, unmatched
+            };
+
+            // Elements
+            const elements = {
+                inputs: {
+                    shopeeBali: document.getElementById('file-shopeeBali'),
+                    shopeeGo: document.getElementById('file-file-shopeeGo'), // Fixed typo below
+                    tokoBali: document.getElementById('file-tokoBali'),
+                    tokoGo: document.getElementById('file-tokoGo'),
+                    aio: document.getElementById('file-aio')
+                },
+                btnAnalyze: document.getElementById('btn-analyze'),
+                btnReset: document.getElementById('btn-reset'),
+                btnExport: document.getElementById('btn-export'),
+                filterBtns: document.querySelectorAll('.filter-btn'),
+                uploadSection: document.getElementById('upload-section'),
+                resultsSection: document.getElementById('results-section'),
+                errorContainer: document.getElementById('error-container'),
+                errorText: document.getElementById('error-text'),
+                tbody: document.getElementById('table-body'),
+                counts: {
+                    total: document.getElementById('count-total'),
+                    matched: document.getElementById('count-matched'),
+                    unmatched: document.getElementById('count-unmatched')
+                }
+            };
+
+            // Fix elements binding
+            elements.inputs.shopeeGo = document.getElementById('file-shopeeGo');
+
+            // --- UI Helpers ---
+            const showError = (msg) => {
+                elements.errorText.textContent = msg;
+                elements.errorContainer.classList.remove('hidden-section');
+            };
+            const hideError = () => {
+                elements.errorContainer.classList.add('hidden-section');
+            };
+
+            // --- File Input Handlers ---
+            const setupFileInput = (key) => {
+                const input = elements.inputs[key];
+                input.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        state.files[key] = file;
+                        
+                        // Update UI
+                        document.getElementById(`label-${key}`).textContent = file.name;
+                        document.getElementById(`label-${key}`).title = file.name;
+                        document.getElementById(`check-${key}`).classList.remove('hidden-section');
+                        
+                        const iconWrapper = document.getElementById(`icon-${key}`);
+                        if(iconWrapper) {
+                            iconWrapper.classList.remove('bg-blue-50', 'text-blue-500');
+                            iconWrapper.classList.add('bg-green-100', 'text-green-600');
+                        }
+                    }
+                });
+            };
+
+            Object.keys(state.files).forEach(setupFileInput);
+
+            // --- Excel Processing Functions ---
+            const readExcel = (file) => {
+                return new Promise((resolve, reject) => {
+                    if (!file) {
+                        resolve([]);
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = new Uint8Array(e.target.result);
+                            const workbook = window.XLSX.read(data, { type: 'array' });
+                            const firstSheet = workbook.SheetNames[0];
+                            const sheetData = window.XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 });
+                            resolve(sheetData);
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+                    reader.onerror = () => reject(new Error("Gagal membaca file"));
+                    reader.readAsArrayBuffer(file);
+                });
+            };
+
+            const processShopee = (data, storeName) => {
+                const results = [];
+                // Data Shopee: baris 2 = index 1
+                for (let i = 1; i < data.length; i++) {
+                    const row = data[i];
+                    if (!row || row.length === 0) continue;
+                    
+                    const orderId = String(row[0] || '').trim(); // Kolom 1
+                    if (!orderId) continue;
+                    
+                    const delivery = String(row[5] || '').trim(); // Kolom 6
+                    results.push({ orderId, platform: 'Shopee', store: storeName, delivery });
+                }
+                return results;
+            };
+
+            const processTokopedia = (data, storeName) => {
+                const results = [];
+                // Data Tokopedia: baris 3 = index 2
+                for (let i = 2; i < data.length; i++) {
+                    const row = data[i];
+                    if (!row || row.length === 0) continue;
+                    
+                    const orderId = String(row[0] || '').trim(); // Kolom 1
+                    if (!orderId) continue;
+                    
+                    const delivery = String(row[40] || '').trim(); // Kolom 41
+                    results.push({ orderId, platform: 'Tokopedia', store: storeName, delivery });
+                }
+                return results;
+            };
+
+            const processAIO = (data) => {
+                const results = [];
+                // Data AIO: baris 2 = index 1
+                for (let i = 1; i < data.length; i++) {
+                    const row = data[i];
+                    if (!row || row.length === 0) continue;
+                    
+                    const text = String(row[2] || '').trim(); // Kolom 3
+                    if (text) results.push(text);
+                }
+                return results;
+            };
+
+            // --- Core Analysis Logic ---
+            const analyzeData = async () => {
+                if (typeof window.XLSX === 'undefined') {
+                    showError("Sistem sedang memuat pustaka Excel. Harap tunggu sebentar lalu coba lagi.");
+                    return;
+                }
+                if (!state.files.aio) {
+                    showError("Data 5 (Data AIO) wajib diunggah untuk pencocokan.");
+                    return;
+                }
+
+                hideError();
+                
+                // Loading State UI
+                elements.btnAnalyze.disabled = true;
+                document.getElementById('analyze-icon').className = 'fas fa-spinner fa-spin text-xl';
+                document.getElementById('analyze-text').textContent = 'Memproses Data...';
+
+                try {
+                    // Baca semua file
+                    const [data1, data2, data3, data4, data5] = await Promise.all([
+                        readExcel(state.files.shopeeBali),
+                        readExcel(state.files.shopeeGo),
+                        readExcel(state.files.tokoBali),
+                        readExcel(state.files.tokoGo),
+                        readExcel(state.files.aio)
+                    ]);
+
+                    let combinedOrders = [];
+                    
+                    if (data1.length) combinedOrders = combinedOrders.concat(processShopee(data1, 'Bali Stationery'));
+                    if (data2.length) combinedOrders = combinedOrders.concat(processShopee(data2, 'GoMall'));
+                    if (data3.length) combinedOrders = combinedOrders.concat(processTokopedia(data3, 'Bali Stationery'));
+                    if (data4.length) combinedOrders = combinedOrders.concat(processTokopedia(data4, 'GoMall'));
+
+                    if (combinedOrders.length === 0) {
+                        throw new Error("Tidak ada data pesanan yang ditemukan pada Data 1 sampai Data 4.");
+                    }
+
+                    const aioList = processAIO(data5);
+
+                    // Pencocokan
+                    state.results = combinedOrders.map(order => {
+                        const isMatch = aioList.some(aioText => aioText.includes(order.orderId));
+                        return { ...order, isMatch };
+                    });
+
+                    // Render UI
+                    elements.uploadSection.classList.add('hidden-section');
+                    elements.resultsSection.classList.remove('hidden-section');
+                    elements.btnReset.classList.remove('hidden-section');
+                    
+                    renderTable();
+
+                } catch (err) {
+                    console.error(err);
+                    showError(err.message || "Terjadi kesalahan saat memproses data.");
+                } finally {
+                    elements.btnAnalyze.disabled = false;
+                    document.getElementById('analyze-icon').className = 'fas fa-check-circle text-xl';
+                    document.getElementById('analyze-text').textContent = 'Mulai Analisis Data';
+                }
+            };
+
+            // --- Rendering Logic ---
+            const renderTable = () => {
+                const { results, filter } = state;
+                
+                // Hitung statistik
+                const total = results.length;
+                const matched = results.filter(r => r.isMatch).length;
+                const unmatched = total - matched;
+                
+                elements.counts.total.textContent = total;
+                elements.counts.matched.textContent = matched;
+                elements.counts.unmatched.textContent = unmatched;
+
+                // Terapkan filter
+                const filteredData = results.filter(r => {
+                    if (filter === 'matched') return r.isMatch;
+                    if (filter === 'unmatched') return !r.isMatch;
+                    return true;
+                });
+
+                // Buat HTML Tabel
+                if (filteredData.length === 0) {
+                    elements.tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="py-10 text-center text-gray-500">
+                                Tidak ada data yang sesuai dengan filter.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                elements.tbody.innerHTML = filteredData.map(row => {
+                    const platformBadge = row.platform === 'Shopee' 
+                        ? '<span class="px-2 py-1 text-xs font-bold rounded-md bg-orange-100 text-orange-700">Shopee</span>'
+                        : '<span class="px-2 py-1 text-xs font-bold rounded-md bg-green-100 text-green-700">Tokopedia</span>';
+                    
+                    const statusBadge = row.isMatch
+                        ? '<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold"><i class="fas fa-check-circle"></i> Cocok</span>'
+                        : '<span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold"><i class="fas fa-times-circle"></i> Tidak</span>';
+
+                    return `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="py-3 px-4 font-medium text-gray-900">${row.orderId}</td>
+                            <td class="py-3 px-4">${platformBadge}</td>
+                            <td class="py-3 px-4 text-gray-600">${row.store}</td>
+                            <td class="py-3 px-4 text-gray-600">${row.delivery || '-'}</td>
+                            <td class="py-3 px-4 text-center">${statusBadge}</td>
+                        </tr>
+                    `;
+                }).join('');
+            };
+
+            // --- Filter Buttons Logic ---
+            elements.filterBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Update state
+                    state.filter = e.target.dataset.filter;
+                    
+                    // Update classes for active button
+                    elements.filterBtns.forEach(b => {
+                        b.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-white text-gray-600 border border-gray-200 hover:bg-gray-50';
+                    });
+                    
+                    if(state.filter === 'all') {
+                        e.target.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-blue-600 text-white';
+                    } else if (state.filter === 'matched') {
+                        e.target.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-green-600 text-white';
+                    } else {
+                        e.target.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-red-600 text-white';
+                    }
+
+                    renderTable();
+                });
+            });
+
+            // --- Export CSV Logic ---
+            const exportToCSV = () => {
+                if (!state.results || state.results.length === 0) return;
+                
+                const filteredData = state.results.filter(r => {
+                    if (state.filter === 'matched') return r.isMatch;
+                    if (state.filter === 'unmatched') return !r.isMatch;
+                    return true;
+                });
+
+                const headers = ["No Pemesanan", "Platform", "Toko", "Layanan Pengiriman", "Status"];
+                const rows = filteredData.map(r => [
+                    r.orderId,
+                    r.platform,
+                    r.store,
+                    r.delivery,
+                    r.isMatch ? 'Cocok' : 'Tidak Cocok'
+                ]);
+                
+                let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+                csvContent += rows.map(e => e.map(item => `"${item}"`).join(",")).join("\n");
+                
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "Hasil_Analisa_Penjualan.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            // --- Reset Logic ---
+            const resetApp = () => {
+                // Reset state
+                state.files = { shopeeBali: null, shopeeGo: null, tokoBali: null, tokoGo: null, aio: null };
+                state.results = [];
+                state.filter = 'all';
+                
+                // Reset UI inputs
+                Object.keys(state.files).forEach(key => {
+                    elements.inputs[key].value = '';
+                    document.getElementById(`label-${key}`).textContent = key === 'aio' ? 'Pilih File Data AIO .xlsx' : 'Pilih File .xlsx';
+                    document.getElementById(`check-${key}`).classList.add('hidden-section');
+                    
+                    const iconWrapper = document.getElementById(`icon-${key}`);
+                    if(iconWrapper) {
+                        iconWrapper.classList.add('bg-blue-50', 'text-blue-500');
+                        iconWrapper.classList.remove('bg-green-100', 'text-green-600');
+                    }
+                });
+
+                // Reset Filter button classes
+                elements.filterBtns.forEach(b => {
+                    if(b.dataset.filter === 'all') {
+                        b.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-blue-600 text-white';
+                    } else {
+                        b.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-white text-gray-600 border border-gray-200 hover:bg-gray-50';
+                    }
+                });
+
+                // Toggle Sections
+                elements.uploadSection.classList.remove('hidden-section');
+                elements.resultsSection.classList.add('hidden-section');
+                elements.btnReset.classList.add('hidden-section');
+                hideError();
+            };
+
+            // --- Event Listeners ---
+            elements.btnAnalyze.addEventListener('click', analyzeData);
+            elements.btnReset.addEventListener('click', resetApp);
+            elements.btnExport.addEventListener('click', exportToCSV);
+        });
+    </script>
+</body>
+</html>
