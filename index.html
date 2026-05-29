@@ -394,7 +394,7 @@
             let chartInstanceStore = null;
             let chartInstanceDelivery = null;
 
-            // Elements
+            // Memastikan Object Elements Dibangun dengan Sempurna (Syntax diperbaiki)
             const elements = {
                 inputs: {
                     shopeeBali: document.getElementById('file-shopeeBali'),
@@ -420,7 +420,28 @@
                 errorContainer: document.getElementById('error-container'),
                 errorText: document.getElementById('error-text'),
                 tbody: document.getElementById('table-body'),
+                
+                // Card & UI Elements
                 cards: {
+                    total: document.getElementById('card-total'),
+                    matched: document.getElementById('card-matched'),
+                    unmatched: document.getElementById('card-unmatched')
+                },
+                counts: {
+                    total: document.getElementById('count-total'),
+                    matched: document.getElementById('count-matched'),
+                    unmatched: document.getElementById('count-unmatched')
+                },
+                modal: {
+                    container: document.getElementById('chart-detail-modal'),
+                    btnClose: document.getElementById('btn-close-modal'),
+                    title: document.getElementById('modal-title'),
+                    tbody: document.getElementById('modal-tbody'),
+                    qty: document.getElementById('modal-qty'),
+                    nominal: document.getElementById('modal-nominal')
+                }
+            };
+
             // --- UI Helpers ---
             const formatCurrency = (val) => {
                 if (typeof val === 'number') {
@@ -471,14 +492,15 @@
                 return String(val).trim();
             };
 
-            // Parse DD/MM/YYYY string to JS Date Object
+            // Parse text date (e.g. "Senin, 01/01/2026" or "01-01-2026") into a JS Date Object
             const parseDateStr = (dateStr) => {
                 if (!dateStr || dateStr === '-') return null;
-                const parts = dateStr.split('/');
-                if (parts.length === 3) {
-                    const d = parseInt(parts[0], 10);
-                    const m = parseInt(parts[1], 10) - 1;
-                    const y = parseInt(parts[2], 10);
+                // Regex super pintar untuk mengekstrak hanya susunan angka tanggal/bulan/tahun
+                const match = String(dateStr).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+                if (match) {
+                    const d = parseInt(match[1], 10);
+                    const m = parseInt(match[2], 10) - 1; // JS months are 0-indexed
+                    const y = parseInt(match[3], 10);
                     return new Date(y, m, d);
                 }
                 return null;
@@ -505,7 +527,7 @@
                 elements.errorContainer.classList.add('hidden-section');
             };
 
-            // --- STREAMING_CHUNK:File Input Event Setup ---
+            // --- File Input Event Setup ---
             const setupFileInput = (key) => {
                 const input = elements.inputs[key];
                 input.addEventListener('change', (e) => {
@@ -611,7 +633,7 @@
                 return 'Manual/Lainnya';
             };
 
-            // --- STREAMING_CHUNK:Populating Filter Dropdowns ---
+            // --- Populating Filter Dropdowns ---
             const populateMonthDropdown = (data) => {
                 const monthsSet = new Set();
                 data.forEach(r => {
@@ -621,7 +643,6 @@
                     }
                 });
 
-                // Sort chronologically
                 const sortedMonths = Array.from(monthsSet).sort((a, b) => {
                     const [monthA, yearA] = a.split(' ');
                     const [monthB, yearB] = b.split(' ');
@@ -639,7 +660,7 @@
                 });
             };
 
-            // --- STREAMING_CHUNK:Core Analysis ---
+            // --- Core Analysis ---
             const analyzeData = async () => {
                 if (typeof window.XLSX === 'undefined') {
                     showError("Sistem sedang memuat pustaka Excel. Harap tunggu sebentar lalu coba lagi.");
@@ -724,14 +745,12 @@
 
                     state.results = finalResults;
 
-                    // Fill the dynamic month dropdown based on extracted AIO dates
                     populateMonthDropdown(finalResults);
 
                     elements.uploadSection.classList.add('hidden-section');
                     elements.resultsSection.classList.remove('hidden-section');
                     elements.btnReset.classList.remove('hidden-section');
                     
-                    // Panggil fungsi pemrosesan UI gabungan
                     applyFilters();
 
                 } catch (err) {
@@ -744,11 +763,10 @@
                 }
             };
 
-            // --- STREAMING_CHUNK:Filtering Logic ---
+            // --- Filtering Logic ---
             const applyFilters = () => {
                 const { results, filterStatus, filterPlatform } = state;
 
-                // Time Filter Values
                 const filterMonth = elements.filterMonth.value;
                 const startDateStr = elements.filterStartDate.value;
                 const endDateStr = elements.filterEndDate.value;
@@ -758,7 +776,6 @@
                 let endObj = endDateStr ? new Date(endDateStr) : null;
                 if (endObj) endObj.setHours(23,59,59,999);
 
-                // Lakukan Filter 
                 const filteredData = results.filter(r => {
                     let passStatus = true;
                     if (filterStatus === 'matched') passStatus = r.isMatch;
@@ -771,13 +788,11 @@
                     if (filterMonth !== 'all' || startObj || endObj) {
                         const d = parseDateStr(r.date);
                         if (!d) {
-                            passTime = false; // Jika filter waktu aktif, data tanpa tanggal kita keluarkan dari view
+                            passTime = false; 
                         } else {
-                            // Check Month Dropdown
                             if (filterMonth !== 'all') {
                                 if (getMonthYearStr(d) !== filterMonth) passTime = false;
                             }
-                            // Check Range
                             if (startObj && d < startObj) passTime = false;
                             if (endObj && d > endObj) passTime = false;
                         }
@@ -835,7 +850,6 @@
                     }
                 }
 
-                // Update UI Modal
                 elements.modal.title.innerHTML = `<i class="fas ${iconClass} ${iconColor} mr-2"></i> Rincian: ${label}`;
                 
                 if (filteredData.length === 0) {
@@ -856,11 +870,9 @@
                 elements.modal.qty.textContent = totalQty;
                 elements.modal.nominal.textContent = formatCurrency(totalNominal);
 
-                // Tampilkan Modal
                 elements.modal.container.classList.remove('hidden-section');
             };
 
-            // Close Modal Events
             elements.modal.btnClose.addEventListener('click', () => {
                 elements.modal.container.classList.add('hidden-section');
             });
@@ -870,9 +882,8 @@
                 }
             });
 
-            // --- STREAMING_CHUNK:Chart Generation ---
+            // --- Chart Generation ---
             const updateChart = (data) => {
-                // HANYA PROSES DATA YANG STATUSNYA COCOK & MANUAL (isMatch === true)
                 const matchedData = data.filter(d => d.isMatch);
 
                 const ctxStore = document.getElementById('marketplaceChart').getContext('2d');
@@ -904,7 +915,6 @@
                 const reguler = aggregateDelivery('Reguler');
                 const manualDeliv = aggregateDelivery('Manual/Lainnya');
 
-                // Render HTML Legends
                 document.getElementById('legend-marketplace').innerHTML = `
                     <div class="flex justify-between items-center bg-orange-50 p-2 rounded text-orange-800">
                         <span><i class="fas fa-circle text-[8px] mr-1 text-[#ea580c]"></i> Shopee Balistationery</span> 
@@ -1026,7 +1036,7 @@
                 });
             };
 
-            // --- STREAMING_CHUNK:Rendering View Table ---
+            // --- Rendering View Table ---
             const renderTable = (filteredData) => {
                 if (filteredData.length === 0) {
                     elements.tbody.innerHTML = `
@@ -1068,7 +1078,7 @@
                 }).join('');
             };
 
-            // --- STREAMING_CHUNK:Handling UI Events ---
+            // --- Handling UI Events ---
             elements.platformBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const target = e.currentTarget;
@@ -1108,7 +1118,6 @@
                 });
             });
 
-            // Date Filters Triggers
             elements.filterMonth.addEventListener('change', applyFilters);
             elements.filterStartDate.addEventListener('change', applyFilters);
             elements.filterEndDate.addEventListener('change', applyFilters);
@@ -1119,14 +1128,15 @@
                 applyFilters();
             });
 
-
-            // --- STREAMING_CHUNK:Exporting Logic with Missing Date Filling ---
+            // --- Exporting Logic ---
             const exportToXLSX = () => {
                 if (!state.filteredResults || state.filteredResults.length === 0) return;
                 
                 const filteredData = state.filteredResults;
+                
+                // Ringkasan Harian HANYA menggunakan data yang Cocok dengan AIO/Manual (TIDAK menyertakan yang "Tidak Cocok" di nominal harian AIO)
+                const matchedDataForSummary = filteredData.filter(r => r.isMatch);
 
-                // Hitung Batas Waktu untuk Data Kosong (Gap Fill)
                 let minTime = null;
                 let maxTime = null;
 
@@ -1134,28 +1144,24 @@
                 const selectedStart = elements.filterStartDate.value;
                 const selectedEnd = elements.filterEndDate.value;
 
-                // 1. Jika User memilih range Kalender Khusus
                 if (selectedStart) minTime = new Date(selectedStart).setHours(0,0,0,0);
                 if (selectedEnd) maxTime = new Date(selectedEnd).setHours(23,59,59,999);
 
-                // 2. Jika User tidak pilih kalender khusus, tapi pilih Dropdown Bulan
                 if (selectedMonth !== 'all' && !selectedStart && !selectedEnd) {
                     const [mStr, yStr] = selectedMonth.split(' ');
                     const monthIndex = monthNamesIndo.indexOf(mStr);
                     const year = parseInt(yStr, 10);
                     
                     minTime = new Date(year, monthIndex, 1).getTime();
-                    maxTime = new Date(year, monthIndex + 1, 0, 23, 59, 59).getTime(); // Last day of month
+                    maxTime = new Date(year, monthIndex + 1, 0, 23, 59, 59).getTime(); 
                 }
 
-                // 3. Jika sama sekali tidak ada filter waktu, ambil min max dari dataset global (AIO)
                 if (!minTime || !maxTime) {
-                    const allValidDates = state.results.map(r => parseDateStr(r.date)).filter(d => d).map(d => d.getTime());
+                    const allValidDates = matchedDataForSummary.map(r => parseDateStr(r.date)).filter(d => d).map(d => d.getTime());
                     if (allValidDates.length > 0) {
                         if (!minTime) minTime = Math.min(...allValidDates);
                         if (!maxTime) maxTime = Math.max(...allValidDates);
                     } else {
-                        // Fallback aman jika data tanpa tanggal sama sekali
                         minTime = new Date().getTime();
                         maxTime = new Date().getTime();
                     }
@@ -1170,7 +1176,7 @@
                     hasData: false
                 };
 
-                // Susun kerangka tanggal secara berurutan (Bahkan jika datanya 0/kosong)
+                // Bikin template kalender kosong supaya tanggal yang 0 transaksi tetap muncul
                 if (minTime && maxTime) {
                     let current = new Date(minTime);
                     const end = new Date(maxTime);
@@ -1188,8 +1194,8 @@
                     }
                 }
 
-                // Isi Data Riil ke Map Ringkasan Harian yang sudah disiapkan
-                filteredData.forEach(r => {
+                // Hitung dari data MATANG (isMatch === true)
+                matchedDataForSummary.forEach(r => {
                     const d = parseDateStr(r.date);
                     let target = null;
                     
@@ -1198,7 +1204,6 @@
                         if (summaryMap[normDateStr]) {
                             target = summaryMap[normDateStr];
                         } else {
-                            // Jaga-jaga apabila ada data diluar bound kalender yg lolos filter
                             summaryMap[normDateStr] = {
                                 dateObj: new Date(d),
                                 date: normDateStr,
@@ -1220,21 +1225,18 @@
                     } else if (r.deliveryCategory === 'Reguler') {
                         target.regulerCount++;
                         target.regulerNominal += nom;
-                    } else { // Manual/Lainnya
+                    } else { 
                         target.manualCount++;
                         target.manualNominal += nom;
                     }
                 });
 
-                // Urutkan data Map berdasarkan Objek Tanggal
                 const sortedMapArray = Object.values(summaryMap).sort((a, b) => a.dateObj - b.dateObj);
                 
-                // Tambahkan yang Tanpa Tanggal di paling akhir jika ada isinya
                 if (unmappedData.hasData) {
                     sortedMapArray.push(unmappedData);
                 }
 
-                // Susun baris XLSX sesuai format yang diminta
                 const summaryRows = sortedMapArray.map(row => {
                     const allCount = row.instanCount + row.regulerCount + row.manualCount;
                     const allNominal = row.instanNominal + row.regulerNominal + row.manualNominal;
@@ -1251,7 +1253,7 @@
                     };
                 });
 
-                // Buat Data Rincian Detail
+                // Di sheet data Detail tetap memasukkan Data "Tidak Cocok" jika masuk filter
                 const detailRows = filteredData.map(r => ({
                     "No Pemesanan": r.orderId,
                     "Tanggal AIO": r.date,
@@ -1271,7 +1273,7 @@
                 window.XLSX.writeFile(wb, "Laporan_Penjualan_Marketplace_AIO.xlsx");
             };
 
-            // --- STREAMING_CHUNK:App Reset ---
+            // --- App Reset ---
             const resetApp = () => {
                 state.files = { shopeeBali: null, shopeeGo: null, tokoBali: null, tokoGo: null, aio: null };
                 state.results = [];
