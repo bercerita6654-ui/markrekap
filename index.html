@@ -715,34 +715,26 @@
                         const aioRecords = processAIO(data5);
                         const finalResults = [];
                         
-                        const seenOrderIds = new Set();
-                        let searchPool = [...aioRecords]; // Untuk optimasi kecepatan 100x lipat
-
-                        // 1. Pencocokan Data Shopee & Tokopedia
+                        // 1. Pencocokan Data Shopee & Tokopedia (Semua Baris Ditampilkan)
                         combinedOrders.forEach(order => {
-                            // DEDUPLIKASI ORDER: Jika sudah pernah dibaca (multi-item), lewati agar tidak ganda.
-                            if (seenOrderIds.has(order.orderId)) return;
-                            seenOrderIds.add(order.orderId);
-
                             const orderIdClean = order.orderId.toUpperCase().replace(/[^A-Z0-9]/g, '');
                             const deliveryCategory = classifyDelivery(order.delivery, order.platform);
 
-                            // Cari di array temporary yang makin lama makin kecil
-                            const matchedIdx = searchPool.findIndex(aio => aio.textClean.includes(orderIdClean));
+                            // Cari di data AIO
+                            const matchedAio = aioRecords.find(aio => aio.textClean.includes(orderIdClean));
 
-                            if (matchedIdx !== -1) {
-                                const matchedAio = searchPool[matchedIdx];
-                                matchedAio.used = true; // Tandai di array asli
-                                searchPool.splice(matchedIdx, 1); // Buang dari pencarian
+                            if (matchedAio) {
+                                const isFirstItem = !matchedAio.used; // Cek apakah ini item pertama dari order tersebut
+                                matchedAio.used = true; // Tandai bahwa AIO ini sudah ketemu pasangannya
 
                                 finalResults.push({
                                     ...order,
                                     isMatch: true,
                                     date: matchedAio.date,
-                                    rawNominal: matchedAio.rawNominal,
-                                    numericNominal: matchedAio.numericNominal,
+                                    rawNominal: isFirstItem ? matchedAio.rawNominal : '(Item Gabungan)',
+                                    numericNominal: isFirstItem ? matchedAio.numericNominal : 0,
                                     deliveryCategory,
-                                    isAioData: true // Flag penting untuk keakuratan total harian
+                                    isAioData: isFirstItem // Hanya dihitung 1 kali agar total grafik/AIO akurat
                                 });
                             } else {
                                 finalResults.push({
@@ -750,7 +742,7 @@
                                     isMatch: false,
                                     date: '-',
                                     rawNominal: '-',
-                                    numericNominal: 0, // Tidak dihitung agar tidak bocor
+                                    numericNominal: 0, 
                                     deliveryCategory,
                                     isAioData: false
                                 });
