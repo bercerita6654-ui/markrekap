@@ -461,6 +461,13 @@
                 return null;
             };
 
+            const formatDateObjToStr = (dateObj) => {
+                const d = String(dateObj.getDate()).padStart(2, '0');
+                const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const y = dateObj.getFullYear();
+                return `${d}/${m}/${y}`;
+            };
+
             const showError = (msg) => {
                 elements.errorText.textContent = msg;
                 elements.errorContainer.classList.remove('hidden-section');
@@ -1063,34 +1070,91 @@
                 
                 const filteredData = state.filteredResults;
 
-                // 1. Buat Data Ringkasan Harian
-                const summaryMap = {};
+                // 1. Cari Rentang Tanggal (Min & Max)
+                let validDates = [];
                 filteredData.forEach(r => {
-                    const dateStr = (r.date && r.date !== '-') ? String(r.date) : 'Tanpa Tanggal / Belum Masuk AIO';
-                    if (!summaryMap[dateStr]) {
+                    const d = parseDateStr(r.date);
+                    if (d) validDates.push(d.getTime());
+                });
+
+                const summaryMap = {};
+                const unmappedData = {
+                    date: 'Tanpa Tanggal / Belum Masuk AIO',
+                    instanCount: 0, instanNominal: 0,
+                    regulerCount: 0, regulerNominal: 0,
+                    manualCount: 0, manualNominal: 0,
+                    hasData: false
+                };
+
+                // Jika ada data tanggal valid, bangun kerangka tanggal komplit dari awal hingga akhir
+                if (validDates.length > 0) {
+                    const minTime = Math.min(...validDates);
+                    const maxTime = Math.max(...validDates);
+                    
+                    let currentDate = new Date(minTime);
+                    const endDate = new Date(maxTime);
+
+                    while (currentDate <= endDate) {
+                        const dateStr = formatDateObjToStr(currentDate);
                         summaryMap[dateStr] = {
+                            dateObj: new Date(currentDate),
                             date: dateStr,
                             instanCount: 0, instanNominal: 0,
                             regulerCount: 0, regulerNominal: 0,
                             manualCount: 0, manualNominal: 0
                         };
+                        currentDate.setDate(currentDate.getDate() + 1);
                     }
+                }
+
+                // 2. Isi Data Riil ke Map Ringkasan Harian
+                filteredData.forEach(r => {
+                    const d = parseDateStr(r.date);
+                    let target = null;
                     
+                    if (d) {
+                        const normDateStr = formatDateObjToStr(d);
+                        if (summaryMap[normDateStr]) {
+                            target = summaryMap[normDateStr];
+                        } else {
+                            // Antisipasi (Meski secara logika sudah di-handle urutan di atas)
+                            summaryMap[normDateStr] = {
+                                dateObj: new Date(d),
+                                date: normDateStr,
+                                instanCount: 0, instanNominal: 0,
+                                regulerCount: 0, regulerNominal: 0,
+                                manualCount: 0, manualNominal: 0
+                            };
+                            target = summaryMap[normDateStr];
+                        }
+                    } else {
+                        target = unmappedData;
+                        unmappedData.hasData = true;
+                    }
+
                     const nom = r.numericNominal || 0;
                     if (r.deliveryCategory === 'Instan') {
-                        summaryMap[dateStr].instanCount++;
-                        summaryMap[dateStr].instanNominal += nom;
+                        target.instanCount++;
+                        target.instanNominal += nom;
                     } else if (r.deliveryCategory === 'Reguler') {
-                        summaryMap[dateStr].regulerCount++;
-                        summaryMap[dateStr].regulerNominal += nom;
+                        target.regulerCount++;
+                        target.regulerNominal += nom;
                     } else { // Manual/Lainnya
-                        summaryMap[dateStr].manualCount++;
-                        summaryMap[dateStr].manualNominal += nom;
+                        target.manualCount++;
+                        target.manualNominal += nom;
                     }
                 });
 
-                // Susun baris XLSX sesuai format yang diminta
-                const summaryRows = Object.values(summaryMap).map(row => {
+                // Urutkan data Map berdasarkan Objek Tanggal
+                const sortedMapArray = Object.values(summaryMap).sort((a, b) => a.dateObj - b.dateObj);
+                
+                // Tambahkan yang Tanpa Tanggal di paling akhir jika ada isinya
+                if (unmappedData.hasData) {
+                    sortedMapArray.push(unmappedData);
+                }
+
+                // 3. Susun baris XLSX sesuai format yang diminta
+                const summaryRows = sortedMapArray.map(row => {
                     const allCount = row.instanCount + row.regulerCount + row.manualCount;
                     const allNominal = row.instanNominal + row.regulerNominal + row.manualNominal;
                     return {
@@ -1106,7 +1170,7 @@
                     };
                 });
 
-                // 2. Buat Data Rincian Detail
+                // 4. Buat Data Rincian Detail (Sama Seperti Sebelumnya)
                 const detailRows = filteredData.map(r => ({
                     "No Pemesanan": r.orderId,
                     "Tanggal AIO": r.date,
