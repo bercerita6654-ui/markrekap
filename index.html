@@ -265,6 +265,18 @@
                                     <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800" data-status="unmatched">Tidak</button>
                                 </div>
                             </div>
+
+                            <!-- Filter Waktu (NEW) -->
+                            <div class="w-full md:w-auto flex flex-col gap-2">
+                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Filter Waktu</p>
+                                <select id="filter-time" class="px-4 py-1.5 h-full rounded-xl text-sm font-bold border border-gray-200 bg-white text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                                    <option value="all">Semua Waktu</option>
+                                    <option value="daily">Harian (Hari Terakhir)</option>
+                                    <option value="weekly">Mingguan (7 Hari Terakhir)</option>
+                                    <option value="monthly">Bulanan (Bulan Terakhir)</option>
+                                    <option value="yearly">Tahunan (Tahun Terakhir)</option>
+                                </select>
+                            </div>
                         </div>
 
                         <!-- Export Button Dipindah Ke Sini (Atas Tabel) -->
@@ -356,8 +368,10 @@
                     aio: null
                 },
                 results: [],
+                filteredResults: [],
                 filterStatus: 'all', 
-                filterPlatform: 'all' 
+                filterPlatform: 'all',
+                filterTime: 'all'
             };
 
             let chartInstanceStore = null;
@@ -377,6 +391,7 @@
                 btnExport: document.getElementById('btn-export'),
                 platformBtns: document.querySelectorAll('.platform-btn'),
                 statusBtns: document.querySelectorAll('.status-btn'),
+                filterTime: document.getElementById('filter-time'),
                 uploadSection: document.getElementById('upload-section'),
                 resultsSection: document.getElementById('results-section'),
                 errorContainer: document.getElementById('error-container'),
@@ -431,6 +446,19 @@
                     return `${d}/${m}/${y}`;
                 }
                 return String(val).trim();
+            };
+
+            // Konversi dari string DD/MM/YYYY ke format Date Javascript
+            const parseDateStr = (dateStr) => {
+                if (!dateStr || dateStr === '-') return null;
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    const d = parseInt(parts[0], 10);
+                    const m = parseInt(parts[1], 10) - 1;
+                    const y = parseInt(parts[2], 10);
+                    return new Date(y, m, d);
+                }
+                return null;
             };
 
             const showError = (msg) => {
@@ -636,8 +664,8 @@
                     elements.resultsSection.classList.remove('hidden-section');
                     elements.btnReset.classList.remove('hidden-section');
                     
-                    updateChart(finalResults);
-                    renderTable();
+                    // Panggil fungsi pemrosesan UI gabungan
+                    applyFilters();
 
                 } catch (err) {
                     console.error(err);
@@ -647,6 +675,76 @@
                     document.getElementById('analyze-icon').className = 'fas fa-cog text-2xl';
                     document.getElementById('analyze-text').textContent = 'Mulai Analisis Data';
                 }
+            };
+
+            // --- Unified Filter Logic ---
+            const applyFilters = () => {
+                const { results, filterStatus, filterPlatform, filterTime } = state;
+
+                // Cari tanggal maksimal dari data yang valid untuk acuan "Hari Ini"
+                let maxDate = new Date(0);
+                results.forEach(r => {
+                    const d = parseDateStr(r.date);
+                    if (d && d > maxDate) maxDate = d;
+                });
+                if (maxDate.getTime() === 0) maxDate = new Date(); // Fallback hari ini jika kosong
+
+                const maxYear = maxDate.getFullYear();
+                const maxMonth = maxDate.getMonth();
+                const maxDay = maxDate.getDate();
+
+                // Lakukan 3 Lapis Filter 
+                const filteredData = results.filter(r => {
+                    let passStatus = true;
+                    if (filterStatus === 'matched') passStatus = r.isMatch;
+                    if (filterStatus === 'unmatched') passStatus = !r.isMatch;
+                    
+                    let passPlatform = true;
+                    if (filterPlatform !== 'all') passPlatform = r.platform === filterPlatform;
+
+                    let passTime = true;
+                    if (filterTime !== 'all') {
+                        const d = parseDateStr(r.date);
+                        if (!d) {
+                            passTime = false; // Jika filter waktu aktif, data tanpa tanggal kita keluarkan
+                        } else {
+                            const rYear = d.getFullYear();
+                            const rMonth = d.getMonth();
+                            const rDay = d.getDate();
+
+                            if (filterTime === 'daily') {
+                                passTime = (rYear === maxYear && rMonth === maxMonth && rDay === maxDay);
+                            } else if (filterTime === 'weekly') {
+                                const sevenDaysAgo = new Date(maxDate);
+                                sevenDaysAgo.setDate(maxDate.getDate() - 7);
+                                passTime = (d >= sevenDaysAgo && d <= maxDate);
+                            } else if (filterTime === 'monthly') {
+                                passTime = (rYear === maxYear && rMonth === maxMonth);
+                            } else if (filterTime === 'yearly') {
+                                passTime = (rYear === maxYear);
+                            }
+                        }
+                    }
+
+                    return passStatus && passPlatform && passTime;
+                });
+
+                state.filteredResults = filteredData;
+
+                // Update semua UI (Kartu, Grafik, Tabel) secara bersamaan
+                updateSummaryCards(filteredData);
+                updateChart(filteredData);
+                renderTable(filteredData);
+            };
+
+            const updateSummaryCards = (filteredData) => {
+                const total = filteredData.length;
+                const matched = filteredData.filter(r => r.isMatch).length;
+                const unmatched = total - matched;
+                
+                elements.counts.total.textContent = total;
+                elements.counts.matched.textContent = matched;
+                elements.counts.unmatched.textContent = unmatched;
             };
 
             // --- Modal Logic ---
@@ -873,28 +971,7 @@
             };
 
             // --- Rendering Logic ---
-            const renderTable = () => {
-                const { results, filterStatus, filterPlatform } = state;
-                
-                const total = results.length;
-                const matched = results.filter(r => r.isMatch).length;
-                const unmatched = total - matched;
-                
-                elements.counts.total.textContent = total;
-                elements.counts.matched.textContent = matched;
-                elements.counts.unmatched.textContent = unmatched;
-
-                const filteredData = results.filter(r => {
-                    let passStatus = true;
-                    if (filterStatus === 'matched') passStatus = r.isMatch;
-                    if (filterStatus === 'unmatched') passStatus = !r.isMatch;
-                    
-                    let passPlatform = true;
-                    if (filterPlatform !== 'all') passPlatform = r.platform === filterPlatform;
-
-                    return passStatus && passPlatform;
-                });
-
+            const renderTable = (filteredData) => {
                 if (filteredData.length === 0) {
                     elements.tbody.innerHTML = `
                         <tr>
@@ -957,7 +1034,7 @@
                     } else {
                         target.className = 'platform-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-blue-500 text-white shadow-sm';
                     }
-                    renderTable();
+                    applyFilters();
                 });
             });
 
@@ -971,24 +1048,20 @@
                     });
                     target.className = 'status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all bg-white text-gray-800 shadow-sm';
                     
-                    renderTable();
+                    applyFilters();
                 });
+            });
+
+            elements.filterTime.addEventListener('change', (e) => {
+                state.filterTime = e.target.value;
+                applyFilters();
             });
 
             // --- Export XLSX Logic Native SheetJS ---
             const exportToXLSX = () => {
-                if (!state.results || state.results.length === 0) return;
+                if (!state.filteredResults || state.filteredResults.length === 0) return;
                 
-                const filteredData = state.results.filter(r => {
-                    let passStatus = true;
-                    if (state.filterStatus === 'matched') passStatus = r.isMatch;
-                    if (state.filterStatus === 'unmatched') passStatus = !r.isMatch;
-                    
-                    let passPlatform = true;
-                    if (state.filterPlatform !== 'all') passPlatform = r.platform === state.filterPlatform;
-
-                    return passStatus && passPlatform;
-                });
+                const filteredData = state.filteredResults;
 
                 // 1. Buat Data Ringkasan Harian
                 const summaryMap = {};
@@ -1060,8 +1133,10 @@
             const resetApp = () => {
                 state.files = { shopeeBali: null, shopeeGo: null, tokoBali: null, tokoGo: null, aio: null };
                 state.results = [];
+                state.filteredResults = [];
                 state.filterStatus = 'all';
                 state.filterPlatform = 'all';
+                state.filterTime = 'all';
                 
                 Object.keys(state.files).forEach(key => {
                     elements.inputs[key].value = '';
@@ -1082,6 +1157,7 @@
 
                 elements.platformBtns[0].click(); 
                 elements.statusBtns[0].click();   
+                elements.filterTime.value = 'all'; // Reset visual select dropdown
 
                 elements.uploadSection.classList.remove('hidden-section');
                 elements.resultsSection.classList.add('hidden-section');
@@ -1095,13 +1171,13 @@
             elements.btnExport.addEventListener('click', exportToXLSX); 
             
             elements.cards.total.addEventListener('click', () => {
-                if(state.results && state.results.length > 0) showModalDetail('Semua Pesanan', 'summary', state.results);
+                if(state.filteredResults && state.filteredResults.length > 0) showModalDetail('Semua Pesanan', 'summary', state.filteredResults);
             });
             elements.cards.matched.addEventListener('click', () => {
-                if(state.results && state.results.length > 0) showModalDetail('Data Cocok & Manual', 'summary', state.results);
+                if(state.filteredResults && state.filteredResults.length > 0) showModalDetail('Data Cocok & Manual', 'summary', state.filteredResults);
             });
             elements.cards.unmatched.addEventListener('click', () => {
-                if(state.results && state.results.length > 0) showModalDetail('Data Tidak Cocok', 'summary', state.results);
+                if(state.filteredResults && state.filteredResults.length > 0) showModalDetail('Data Tidak Cocok', 'summary', state.filteredResults);
             });
         });
     </script>
