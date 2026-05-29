@@ -421,26 +421,7 @@
                 errorText: document.getElementById('error-text'),
                 tbody: document.getElementById('table-body'),
                 cards: {
-                    total: document.getElementById('card-total'),
-                    matched: document.getElementById('card-matched'),
-                    unmatched: document.getElementById('card-unmatched')
-                },
-                counts: {
-                    total: document.getElementById('count-total'),
-                    matched: document.getElementById('count-matched'),
-                    unmatched: document.getElementById('count-unmatched')
-                },
-                modal: {
-                    container: document.getElementById('chart-detail-modal'),
-                    btnClose: document.getElementById('btn-close-modal'),
-                    title: document.getElementById('modal-title'),
-                    tbody: document.getElementById('modal-tbody'),
-                    qty: document.getElementById('modal-qty'),
-                    nominal: document.getElementById('modal-nominal')
-                }
-            };
-
-            // --- UI Helpers & Parsers ---
+            // --- UI Helpers ---
             const formatCurrency = (val) => {
                 if (typeof val === 'number') {
                     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
@@ -450,11 +431,30 @@
             };
 
             const parseNominal = (val) => {
-                if (typeof val === 'number') return Math.round(val);
+                if (typeof val === 'number') return val;
                 if (!val || val === '-') return 0;
-                const cleanStr = String(val).split(',')[0].replace(/\D/g, ''); 
-                const num = parseInt(cleanStr, 10);
-                return isNaN(num) ? 0 : num;
+                
+                let str = String(val).trim();
+                
+                // Deteksi nilai negatif (misal: -1000 atau (1000))
+                let isNegative = str.includes('-') || (str.includes('(') && str.includes(')'));
+                
+                // Ambil hanya angka, koma, dan titik. Buang simbol Rp, spasi, dsb.
+                str = str.replace(/[^\d.,]/g, '');
+                if (!str) return 0;
+                
+                // Buang desimal jika berakhiran ,XX atau .XX (1 hingga 2 digit di belakang)
+                if (/(,|\.)\d{1,2}$/.test(str)) {
+                    str = str.replace(/(,|\.)\d{1,2}$/, '');
+                }
+                
+                // Buang semua sisa pemisah ribuan (koma atau titik)
+                str = str.replace(/[,.]/g, '');
+                
+                let num = parseInt(str, 10);
+                if (isNaN(num)) return 0;
+                
+                return isNegative ? -num : num;
             };
 
             const formatExcelDate = (val) => {
