@@ -448,7 +448,6 @@
                 return val;
             };
 
-            // PARSER KOKOH MENCEGAH NOMINAL JADI 0 
             const parseNominal = (val) => {
                 if (typeof val === 'number') return val;
                 if (!val || val === '-') return 0;
@@ -456,18 +455,14 @@
                 let str = String(val).trim();
                 let isNegative = str.includes('-') || (str.includes('(') && str.includes(')'));
                 
-                // Ambil hanya angka, koma, dan titik. Buang simbol Rp, spasi, dsb.
                 str = str.replace(/[^\d.,]/g, '');
                 if (!str) return 0;
                 
-                // Buang desimal jika berakhiran ,XX atau .XX (1 atau 2 digit di belakang)
                 if (/(,|\.)\d{1,2}$/.test(str)) {
                     str = str.replace(/(,|\.)\d{1,2}$/, '');
                 }
                 
-                // Hapus semua pemisah ribuan
                 str = str.replace(/[,.]/g, ''); 
-                
                 let num = parseInt(str, 10);
                 if (isNaN(num)) return 0;
                 
@@ -586,7 +581,6 @@
                             const data = new Uint8Array(e.target.result);
                             const workbook = window.XLSX.read(data, { type: 'array' });
                             const firstSheet = workbook.SheetNames[0];
-                            // RAW FALSE SANGAT PENTING: Mencegah angka 18 digit Tokopedia terpotong/dibulatkan
                             const sheetData = window.XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1, raw: false, defval: "" });
                             resolve(sheetData);
                         } catch (err) {
@@ -624,7 +618,6 @@
                 return results;
             };
 
-            // Pembersihan AIO Data
             const processAIO = (data) => {
                 const results = [];
                 for (let i = 1; i < data.length; i++) {
@@ -638,7 +631,6 @@
                     const numericNominal = parseNominal(rawNominal); 
                     
                     if (text) {
-                        // Hilangkan SEMUA Karakter Selain Huruf & Angka agar cocok walau ada Spasi dll
                         const textClean = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
                         results.push({ text, textClean, date: dateInfo, rawNominal, numericNominal, used: false });
                     }
@@ -647,7 +639,7 @@
             };
 
             const classifyDelivery = (delivery, platform) => {
-                if (!delivery || delivery === '-' || platform === 'Online Manual') return 'Manual/Lainnya';
+                if (!delivery || delivery === '-' || platform === 'Online Manual' || platform === 'Tidak Diketahui') return 'Manual/Lainnya';
                 const del = delivery.toLowerCase();
                 if (del.includes('instant') || del.includes('instan')) {
                     return 'Instan';
@@ -658,7 +650,6 @@
                 return 'Manual/Lainnya';
             };
 
-            // --- Populating Filter Dropdowns ---
             const populateMonthDropdown = (data) => {
                 const monthsSet = new Set();
                 data.forEach(r => {
@@ -685,7 +676,7 @@
                 });
             };
 
-            // --- Core Analysis (SUPER CEPAT & AKURAT) ---
+            // --- Core Analysis (DATA 5 MASTER APPROACH) ---
             const analyzeData = async () => {
                 if (typeof window.XLSX === 'undefined') {
                     showError("Sistem sedang memuat pustaka Excel. Harap tunggu sebentar lalu coba lagi.");
@@ -718,8 +709,7 @@
                         if (data3.length) rawCombinedOrders = rawCombinedOrders.concat(processTokopedia(data3, 'Bali Stationery'));
                         if (data4.length) rawCombinedOrders = rawCombinedOrders.concat(processTokopedia(data4, 'GoMall'));
 
-                        // SOLUSI DEDUPLIKASI ORDER: 
-                        // Mencegah error qty karena 1 pesanan dipecah jadi 5 baris di excel Shopee
+                        // Buat Map referensi (Kamus) dari Data 1-4 untuk mencari layanannya saja
                         const uniqueOrdersMap = new Map();
                         rawCombinedOrders.forEach(order => {
                             const orderIdClean = order.orderId.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -733,45 +723,39 @@
                         const aioRecords = processAIO(data5);
                         const finalResults = [];
                         
-                        // 1. Pencocokan Data Shopee & Tokopedia
-                        combinedOrders.forEach(order => {
-                            const deliveryCategory = classifyDelivery(order.delivery, order.platform);
+                        // LOOP UTAMA DIMULAI DARI DATA 5 (AIO = MASTER)
+                        aioRecords.forEach(aio => {
+                            // Mencari Order ID (dari MP) yang terselip di teks AIO
+                            const matchedOrder = combinedOrders.find(order => {
+                                if (order.used) return false;
+                                return aio.textClean.includes(order.orderIdClean);
+                            });
 
-                            // Cari di data AIO yang belum digunakan
-                            const matchedAio = aioRecords.find(aio => !aio.used && aio.textClean.includes(order.orderIdClean));
-
-                            if (matchedAio) {
-                                matchedAio.used = true; // Tandai agar AIO ini tidak dipakai double
+                            if (matchedOrder) {
+                                matchedOrder.used = true;
+                                const deliveryCategory = classifyDelivery(matchedOrder.delivery, matchedOrder.platform);
                                 finalResults.push({
-                                    ...order,
+                                    orderId: matchedOrder.orderId,
+                                    platform: matchedOrder.platform,
+                                    store: matchedOrder.store,
+                                    delivery: matchedOrder.delivery,
                                     isMatch: true,
-                                    date: matchedAio.date,
-                                    rawNominal: matchedAio.rawNominal,
-                                    numericNominal: matchedAio.numericNominal,
-                                    deliveryCategory
+                                    date: aio.date,
+                                    rawNominal: aio.rawNominal,
+                                    numericNominal: aio.numericNominal,
+                                    deliveryCategory: deliveryCategory,
+                                    isAioData: true // Ini murni dari data master AIO
                                 });
                             } else {
-                                finalResults.push({
-                                    ...order,
-                                    isMatch: false,
-                                    date: '-',
-                                    rawNominal: '-',
-                                    numericNominal: 0, 
-                                    deliveryCategory
-                                });
-                            }
-                        });
-
-                        // 2. Ekstrak SELURUH SISA AIO (Manual, atau MP yang kelupaan di-upload)
-                        aioRecords.forEach(aio => {
-                            if (!aio.used) {
-                                let platform = 'Online Manual';
+                                // Jika data ada di AIO tapi tidak ada di file marketplace 1-4
+                                let platform = 'Tidak Diketahui';
                                 let store = 'Data 5 (AIO)';
+                                let isMatch = false; // Karena tidak ketemu pasangannya di MP
 
                                 if (aio.textClean.includes('SHOPEE')) {
                                     platform = 'Shopee';
                                     store = 'AIO (Tdk ada di File 1/2)';
-                                } else if (aio.textClean.includes('TOKOPEDIA') || aio.textClean.includes('TOKOPED')) {
+                                } else if (aio.textClean.includes('TOKOPEDIA') || aio.textClean.includes('TOKOPED') || aio.textClean.includes('TIKTOK')) {
                                     platform = 'Tokopedia';
                                     store = 'AIO (Tdk ada di File 3/4)';
                                 }
@@ -779,6 +763,7 @@
                                 if (aio.textClean.includes('ONLINEMANUAL') || aio.textClean.includes('MANUAL')) {
                                     platform = 'Online Manual';
                                     store = 'Data 5 (AIO)';
+                                    isMatch = true; // Manual dianggap sah dan masuk hitungan 'Cocok'
                                 }
 
                                 finalResults.push({
@@ -786,11 +771,31 @@
                                     platform: platform,
                                     store: store,
                                     delivery: '-',
-                                    isMatch: platform === 'Online Manual', // Anggap cocok jika dia pure manual
+                                    isMatch: isMatch,
                                     date: aio.date,
                                     rawNominal: aio.rawNominal,
                                     numericNominal: aio.numericNominal,
-                                    deliveryCategory: 'Manual/Lainnya'
+                                    deliveryCategory: 'Manual/Lainnya',
+                                    isAioData: true // Ini murni dari data master AIO
+                                });
+                            }
+                        });
+
+                        // LOOP KEDUA: Cek Pesanan MP (Data 1-4) yang Tidak Masuk ke AIO
+                        combinedOrders.forEach(order => {
+                            if (!order.used) {
+                                const deliveryCategory = classifyDelivery(order.delivery, order.platform);
+                                finalResults.push({
+                                    orderId: order.orderId,
+                                    platform: order.platform,
+                                    store: order.store,
+                                    delivery: order.delivery,
+                                    isMatch: false,
+                                    date: '-',
+                                    rawNominal: '-',
+                                    numericNominal: 0, // Karena uangnya tidak ada di AIO
+                                    deliveryCategory: deliveryCategory,
+                                    isAioData: false
                                 });
                             }
                         });
@@ -941,6 +946,7 @@
 
             // --- Chart Generation ---
             const updateChart = (data) => {
+                // HANYA COCOK & MANUAL yg di Chart
                 const matchedData = data.filter(d => d.isMatch);
 
                 const ctxStore = document.getElementById('marketplaceChart').getContext('2d');
@@ -1109,17 +1115,20 @@
 
                 elements.tbody.innerHTML = filteredData.map(row => {
                     let platformBadge = '';
-                    if(row.platform === 'Shopee') {
+                    let pLower = row.platform.toLowerCase();
+                    if(pLower.includes('shopee')) {
                         platformBadge = '<span class="px-3 py-1 text-xs font-extrabold rounded-md bg-orange-500 text-white shadow-sm border border-orange-600">SHOPEE</span>';
-                    } else if (row.platform === 'Tokopedia') {
+                    } else if (pLower.includes('tokopedia')) {
                         platformBadge = '<span class="px-3 py-1 text-xs font-extrabold rounded-md bg-green-500 text-white shadow-sm border border-green-600">TOKOPEDIA</span>';
+                    } else if (pLower.includes('tidak diketahui')) {
+                        platformBadge = '<span class="px-3 py-1 text-xs font-extrabold rounded-md bg-gray-500 text-white shadow-sm border border-gray-600">UNIDENTIFIED</span>';
                     } else {
                         platformBadge = '<span class="px-3 py-1 text-xs font-extrabold rounded-md bg-blue-500 text-white shadow-sm border border-blue-600">MANUAL</span>';
                     }
                     
                     const statusBadge = row.isMatch
-                        ? '<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200"><i class="fas fa-check-circle"></i> Cocok</span>'
-                        : '<span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200"><i class="fas fa-times-circle"></i> Tidak Ada di AIO</span>';
+                        ? '<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200"><i class="fas fa-check-circle"></i> Cocok / Valid</span>'
+                        : '<span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200"><i class="fas fa-times-circle"></i> Tidak Cocok</span>';
 
                     return `
                         <tr class="hover:bg-gray-50 transition-colors">
@@ -1191,8 +1200,8 @@
                 
                 const filteredData = state.filteredResults;
                 
-                // Ringkasan Harian HANYA menggunakan data yang Cocok dengan AIO/Manual (TIDAK menyertakan yang "Tidak Cocok" di nominal harian AIO)
-                const matchedDataForSummary = filteredData.filter(r => r.isMatch);
+                // MENGGUNAKAN HANYA DATA AIO ASLI (Flag isAioData === true) AGAR TOTAL HARIAN 100% PERSIS DATA 5
+                const matchedDataForSummary = filteredData.filter(r => r.isAioData);
 
                 let minTime = null;
                 let maxTime = null;
@@ -1233,7 +1242,7 @@
                     hasData: false
                 };
 
-                // Bikin template kalender kosong supaya tanggal yang 0 transaksi tetap muncul
+                // Template kalender kosong supaya tanggal yang 0 transaksi tetap muncul
                 if (minTime && maxTime) {
                     let current = new Date(minTime);
                     const end = new Date(maxTime);
@@ -1251,7 +1260,6 @@
                     }
                 }
 
-                // Hitung dari data MATANG (isMatch === true)
                 matchedDataForSummary.forEach(r => {
                     const d = parseDateStr(r.date);
                     let target = null;
@@ -1310,7 +1318,6 @@
                     };
                 });
 
-                // Di sheet data Detail tetap memasukkan Data "Tidak Cocok" jika masuk filter
                 const detailRows = filteredData.map(r => ({
                     "No Pemesanan": r.orderId,
                     "Tanggal AIO": r.date,
@@ -1319,7 +1326,7 @@
                     "Layanan Pengiriman": r.delivery,
                     "Kategori Layanan": r.deliveryCategory,
                     "Nominal AIO": r.numericNominal || 0,
-                    "Status": r.isMatch ? 'Cocok' : 'Tidak Cocok'
+                    "Status": r.isMatch ? 'Cocok / Valid' : 'Tidak Cocok'
                 }));
 
                 const wb = window.XLSX.utils.book_new();
