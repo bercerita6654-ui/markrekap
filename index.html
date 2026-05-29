@@ -243,6 +243,8 @@
             <!-- Data Table Section -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="p-5 border-b border-gray-100 bg-gray-50/50 space-y-4">
+                    
+                    <!-- Top Filter Row -->
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                         <div class="flex flex-col md:flex-row gap-4 w-full lg:w-auto">
                             <!-- Filter Marketplace -->
@@ -265,27 +267,41 @@
                                     <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800" data-status="unmatched">Tidak</button>
                                 </div>
                             </div>
-
-                            <!-- Filter Waktu (NEW) -->
-                            <div class="w-full md:w-auto flex flex-col gap-2">
-                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Filter Waktu</p>
-                                <select id="filter-time" class="px-4 py-1.5 h-full rounded-xl text-sm font-bold border border-gray-200 bg-white text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                                    <option value="all">Semua Waktu</option>
-                                    <option value="daily">Harian (Hari Terakhir)</option>
-                                    <option value="weekly">Mingguan (7 Hari Terakhir)</option>
-                                    <option value="monthly">Bulanan (Bulan Terakhir)</option>
-                                    <option value="yearly">Tahunan (Tahun Terakhir)</option>
-                                </select>
-                            </div>
                         </div>
 
-                        <!-- Export Button Dipindah Ke Sini (Atas Tabel) -->
+                        <!-- Export Button -->
                         <div class="w-full lg:w-auto flex justify-end mt-4 lg:mt-0">
                             <button id="btn-export" class="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors shadow-md w-full sm:w-auto justify-center">
                                 <i class="fas fa-file-excel text-lg"></i> Export Data XLSX
                             </button>
                         </div>
                     </div>
+
+                    <!-- Bottom Filter Row (Date & Time) -->
+                    <div class="w-full bg-white p-4 rounded-xl border border-gray-200 flex flex-col md:flex-row flex-wrap items-center gap-4">
+                        <div class="w-full md:w-auto flex flex-col">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Pilih Bulan</label>
+                            <select id="filter-month" class="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer min-w-[150px]">
+                                <option value="all">Semua Bulan</option>
+                                <!-- Options injected via JS -->
+                            </select>
+                        </div>
+                        <div class="w-full md:w-auto flex flex-col md:flex-row items-start md:items-center gap-2">
+                            <div class="flex flex-col">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Dari Tanggal</label>
+                                <input type="date" id="filter-start-date" class="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                            </div>
+                            <span class="mt-4 hidden md:inline text-gray-400 font-bold">-</span>
+                            <div class="flex flex-col">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Sampai Tanggal</label>
+                                <input type="date" id="filter-end-date" class="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                            </div>
+                            <button id="btn-clear-date" class="mt-4 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm font-bold transition-colors shadow-sm" title="Reset Filter Waktu">
+                                <i class="fas fa-sync-alt"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
 
                 <!-- Table Container -->
@@ -370,9 +386,10 @@
                 results: [],
                 filteredResults: [],
                 filterStatus: 'all', 
-                filterPlatform: 'all',
-                filterTime: 'all'
+                filterPlatform: 'all'
             };
+
+            const monthNamesIndo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
             let chartInstanceStore = null;
             let chartInstanceDelivery = null;
@@ -391,7 +408,13 @@
                 btnExport: document.getElementById('btn-export'),
                 platformBtns: document.querySelectorAll('.platform-btn'),
                 statusBtns: document.querySelectorAll('.status-btn'),
-                filterTime: document.getElementById('filter-time'),
+                
+                // Date & Time Filter Elements
+                filterMonth: document.getElementById('filter-month'),
+                filterStartDate: document.getElementById('filter-start-date'),
+                filterEndDate: document.getElementById('filter-end-date'),
+                btnClearDate: document.getElementById('btn-clear-date'),
+
                 uploadSection: document.getElementById('upload-section'),
                 resultsSection: document.getElementById('results-section'),
                 errorContainer: document.getElementById('error-container'),
@@ -417,7 +440,7 @@
                 }
             };
 
-            // --- UI Helpers ---
+            // --- UI Helpers & Parsers ---
             const formatCurrency = (val) => {
                 if (typeof val === 'number') {
                     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
@@ -443,12 +466,12 @@
                     const d = String(date.getUTCDate()).padStart(2, '0');
                     const m = String(date.getUTCMonth() + 1).padStart(2, '0');
                     const y = date.getUTCFullYear();
-                    return `${d}/${m}/${y}`;
+                    return `${d}/${m}/${y}`; // Returns DD/MM/YYYY
                 }
                 return String(val).trim();
             };
 
-            // Konversi dari string DD/MM/YYYY ke format Date Javascript
+            // Parse DD/MM/YYYY string to JS Date Object
             const parseDateStr = (dateStr) => {
                 if (!dateStr || dateStr === '-') return null;
                 const parts = dateStr.split('/');
@@ -468,6 +491,12 @@
                 return `${d}/${m}/${y}`;
             };
 
+            const getMonthYearStr = (dateObj) => {
+                const m = monthNamesIndo[dateObj.getMonth()];
+                const y = dateObj.getFullYear();
+                return `${m} ${y}`;
+            };
+
             const showError = (msg) => {
                 elements.errorText.textContent = msg;
                 elements.errorContainer.classList.remove('hidden-section');
@@ -476,7 +505,7 @@
                 elements.errorContainer.classList.add('hidden-section');
             };
 
-            // --- File Input Handlers ---
+            // --- STREAMING_CHUNK:File Input Event Setup ---
             const setupFileInput = (key) => {
                 const input = elements.inputs[key];
                 input.addEventListener('change', (e) => {
@@ -582,7 +611,35 @@
                 return 'Manual/Lainnya';
             };
 
-            // --- Core Analysis Logic ---
+            // --- STREAMING_CHUNK:Populating Filter Dropdowns ---
+            const populateMonthDropdown = (data) => {
+                const monthsSet = new Set();
+                data.forEach(r => {
+                    const d = parseDateStr(r.date);
+                    if(d) {
+                        monthsSet.add(getMonthYearStr(d));
+                    }
+                });
+
+                // Sort chronologically
+                const sortedMonths = Array.from(monthsSet).sort((a, b) => {
+                    const [monthA, yearA] = a.split(' ');
+                    const [monthB, yearB] = b.split(' ');
+                    const dateA = new Date(yearA, monthNamesIndo.indexOf(monthA), 1);
+                    const dateB = new Date(yearB, monthNamesIndo.indexOf(monthB), 1);
+                    return dateA - dateB;
+                });
+
+                elements.filterMonth.innerHTML = '<option value="all">Semua Bulan</option>';
+                sortedMonths.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m;
+                    opt.textContent = m;
+                    elements.filterMonth.appendChild(opt);
+                });
+            };
+
+            // --- STREAMING_CHUNK:Core Analysis ---
             const analyzeData = async () => {
                 if (typeof window.XLSX === 'undefined') {
                     showError("Sistem sedang memuat pustaka Excel. Harap tunggu sebentar lalu coba lagi.");
@@ -667,6 +724,9 @@
 
                     state.results = finalResults;
 
+                    // Fill the dynamic month dropdown based on extracted AIO dates
+                    populateMonthDropdown(finalResults);
+
                     elements.uploadSection.classList.add('hidden-section');
                     elements.resultsSection.classList.remove('hidden-section');
                     elements.btnReset.classList.remove('hidden-section');
@@ -684,23 +744,21 @@
                 }
             };
 
-            // --- Unified Filter Logic ---
+            // --- STREAMING_CHUNK:Filtering Logic ---
             const applyFilters = () => {
-                const { results, filterStatus, filterPlatform, filterTime } = state;
+                const { results, filterStatus, filterPlatform } = state;
 
-                // Cari tanggal maksimal dari data yang valid untuk acuan "Hari Ini"
-                let maxDate = new Date(0);
-                results.forEach(r => {
-                    const d = parseDateStr(r.date);
-                    if (d && d > maxDate) maxDate = d;
-                });
-                if (maxDate.getTime() === 0) maxDate = new Date(); // Fallback hari ini jika kosong
+                // Time Filter Values
+                const filterMonth = elements.filterMonth.value;
+                const startDateStr = elements.filterStartDate.value;
+                const endDateStr = elements.filterEndDate.value;
+                
+                let startObj = startDateStr ? new Date(startDateStr) : null;
+                if (startObj) startObj.setHours(0,0,0,0);
+                let endObj = endDateStr ? new Date(endDateStr) : null;
+                if (endObj) endObj.setHours(23,59,59,999);
 
-                const maxYear = maxDate.getFullYear();
-                const maxMonth = maxDate.getMonth();
-                const maxDay = maxDate.getDate();
-
-                // Lakukan 3 Lapis Filter 
+                // Lakukan Filter 
                 const filteredData = results.filter(r => {
                     let passStatus = true;
                     if (filterStatus === 'matched') passStatus = r.isMatch;
@@ -710,26 +768,18 @@
                     if (filterPlatform !== 'all') passPlatform = r.platform === filterPlatform;
 
                     let passTime = true;
-                    if (filterTime !== 'all') {
+                    if (filterMonth !== 'all' || startObj || endObj) {
                         const d = parseDateStr(r.date);
                         if (!d) {
-                            passTime = false; // Jika filter waktu aktif, data tanpa tanggal kita keluarkan
+                            passTime = false; // Jika filter waktu aktif, data tanpa tanggal kita keluarkan dari view
                         } else {
-                            const rYear = d.getFullYear();
-                            const rMonth = d.getMonth();
-                            const rDay = d.getDate();
-
-                            if (filterTime === 'daily') {
-                                passTime = (rYear === maxYear && rMonth === maxMonth && rDay === maxDay);
-                            } else if (filterTime === 'weekly') {
-                                const sevenDaysAgo = new Date(maxDate);
-                                sevenDaysAgo.setDate(maxDate.getDate() - 7);
-                                passTime = (d >= sevenDaysAgo && d <= maxDate);
-                            } else if (filterTime === 'monthly') {
-                                passTime = (rYear === maxYear && rMonth === maxMonth);
-                            } else if (filterTime === 'yearly') {
-                                passTime = (rYear === maxYear);
+                            // Check Month Dropdown
+                            if (filterMonth !== 'all') {
+                                if (getMonthYearStr(d) !== filterMonth) passTime = false;
                             }
+                            // Check Range
+                            if (startObj && d < startObj) passTime = false;
+                            if (endObj && d > endObj) passTime = false;
                         }
                     }
 
@@ -738,7 +788,6 @@
 
                 state.filteredResults = filteredData;
 
-                // Update semua UI (Kartu, Grafik, Tabel) secara bersamaan
                 updateSummaryCards(filteredData);
                 updateChart(filteredData);
                 renderTable(filteredData);
@@ -821,7 +870,7 @@
                 }
             });
 
-            // --- Chart Logic ---
+            // --- STREAMING_CHUNK:Chart Generation ---
             const updateChart = (data) => {
                 // HANYA PROSES DATA YANG STATUSNYA COCOK & MANUAL (isMatch === true)
                 const matchedData = data.filter(d => d.isMatch);
@@ -977,7 +1026,7 @@
                 });
             };
 
-            // --- Rendering Logic ---
+            // --- STREAMING_CHUNK:Rendering View Table ---
             const renderTable = (filteredData) => {
                 if (filteredData.length === 0) {
                     elements.tbody.innerHTML = `
@@ -1019,7 +1068,7 @@
                 }).join('');
             };
 
-            // --- Filter Event Listeners ---
+            // --- STREAMING_CHUNK:Handling UI Events ---
             elements.platformBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const target = e.currentTarget;
@@ -1059,23 +1108,58 @@
                 });
             });
 
-            elements.filterTime.addEventListener('change', (e) => {
-                state.filterTime = e.target.value;
+            // Date Filters Triggers
+            elements.filterMonth.addEventListener('change', applyFilters);
+            elements.filterStartDate.addEventListener('change', applyFilters);
+            elements.filterEndDate.addEventListener('change', applyFilters);
+            elements.btnClearDate.addEventListener('click', () => {
+                elements.filterMonth.value = 'all';
+                elements.filterStartDate.value = '';
+                elements.filterEndDate.value = '';
                 applyFilters();
             });
 
-            // --- Export XLSX Logic Native SheetJS ---
+
+            // --- STREAMING_CHUNK:Exporting Logic with Missing Date Filling ---
             const exportToXLSX = () => {
                 if (!state.filteredResults || state.filteredResults.length === 0) return;
                 
                 const filteredData = state.filteredResults;
 
-                // 1. Cari Rentang Tanggal (Min & Max)
-                let validDates = [];
-                filteredData.forEach(r => {
-                    const d = parseDateStr(r.date);
-                    if (d) validDates.push(d.getTime());
-                });
+                // Hitung Batas Waktu untuk Data Kosong (Gap Fill)
+                let minTime = null;
+                let maxTime = null;
+
+                const selectedMonth = elements.filterMonth.value;
+                const selectedStart = elements.filterStartDate.value;
+                const selectedEnd = elements.filterEndDate.value;
+
+                // 1. Jika User memilih range Kalender Khusus
+                if (selectedStart) minTime = new Date(selectedStart).setHours(0,0,0,0);
+                if (selectedEnd) maxTime = new Date(selectedEnd).setHours(23,59,59,999);
+
+                // 2. Jika User tidak pilih kalender khusus, tapi pilih Dropdown Bulan
+                if (selectedMonth !== 'all' && !selectedStart && !selectedEnd) {
+                    const [mStr, yStr] = selectedMonth.split(' ');
+                    const monthIndex = monthNamesIndo.indexOf(mStr);
+                    const year = parseInt(yStr, 10);
+                    
+                    minTime = new Date(year, monthIndex, 1).getTime();
+                    maxTime = new Date(year, monthIndex + 1, 0, 23, 59, 59).getTime(); // Last day of month
+                }
+
+                // 3. Jika sama sekali tidak ada filter waktu, ambil min max dari dataset global (AIO)
+                if (!minTime || !maxTime) {
+                    const allValidDates = state.results.map(r => parseDateStr(r.date)).filter(d => d).map(d => d.getTime());
+                    if (allValidDates.length > 0) {
+                        if (!minTime) minTime = Math.min(...allValidDates);
+                        if (!maxTime) maxTime = Math.max(...allValidDates);
+                    } else {
+                        // Fallback aman jika data tanpa tanggal sama sekali
+                        minTime = new Date().getTime();
+                        maxTime = new Date().getTime();
+                    }
+                }
 
                 const summaryMap = {};
                 const unmappedData = {
@@ -1086,28 +1170,25 @@
                     hasData: false
                 };
 
-                // Jika ada data tanggal valid, bangun kerangka tanggal komplit dari awal hingga akhir
-                if (validDates.length > 0) {
-                    const minTime = Math.min(...validDates);
-                    const maxTime = Math.max(...validDates);
-                    
-                    let currentDate = new Date(minTime);
-                    const endDate = new Date(maxTime);
+                // Susun kerangka tanggal secara berurutan (Bahkan jika datanya 0/kosong)
+                if (minTime && maxTime) {
+                    let current = new Date(minTime);
+                    const end = new Date(maxTime);
 
-                    while (currentDate <= endDate) {
-                        const dateStr = formatDateObjToStr(currentDate);
+                    while (current <= end) {
+                        const dateStr = formatDateObjToStr(current);
                         summaryMap[dateStr] = {
-                            dateObj: new Date(currentDate),
+                            dateObj: new Date(current),
                             date: dateStr,
                             instanCount: 0, instanNominal: 0,
                             regulerCount: 0, regulerNominal: 0,
                             manualCount: 0, manualNominal: 0
                         };
-                        currentDate.setDate(currentDate.getDate() + 1);
+                        current.setDate(current.getDate() + 1);
                     }
                 }
 
-                // 2. Isi Data Riil ke Map Ringkasan Harian
+                // Isi Data Riil ke Map Ringkasan Harian yang sudah disiapkan
                 filteredData.forEach(r => {
                     const d = parseDateStr(r.date);
                     let target = null;
@@ -1117,7 +1198,7 @@
                         if (summaryMap[normDateStr]) {
                             target = summaryMap[normDateStr];
                         } else {
-                            // Antisipasi (Meski secara logika sudah di-handle urutan di atas)
+                            // Jaga-jaga apabila ada data diluar bound kalender yg lolos filter
                             summaryMap[normDateStr] = {
                                 dateObj: new Date(d),
                                 date: normDateStr,
@@ -1153,7 +1234,7 @@
                     sortedMapArray.push(unmappedData);
                 }
 
-                // 3. Susun baris XLSX sesuai format yang diminta
+                // Susun baris XLSX sesuai format yang diminta
                 const summaryRows = sortedMapArray.map(row => {
                     const allCount = row.instanCount + row.regulerCount + row.manualCount;
                     const allNominal = row.instanNominal + row.regulerNominal + row.manualNominal;
@@ -1170,7 +1251,7 @@
                     };
                 });
 
-                // 4. Buat Data Rincian Detail (Sama Seperti Sebelumnya)
+                // Buat Data Rincian Detail
                 const detailRows = filteredData.map(r => ({
                     "No Pemesanan": r.orderId,
                     "Tanggal AIO": r.date,
@@ -1183,24 +1264,20 @@
                 }));
 
                 const wb = window.XLSX.utils.book_new();
-                
                 const wsSummary = window.XLSX.utils.json_to_sheet(summaryRows);
                 window.XLSX.utils.book_append_sheet(wb, wsSummary, "Ringkasan Harian");
-                
                 const wsDetail = window.XLSX.utils.json_to_sheet(detailRows);
                 window.XLSX.utils.book_append_sheet(wb, wsDetail, "Data Detail");
-                
                 window.XLSX.writeFile(wb, "Laporan_Penjualan_Marketplace_AIO.xlsx");
             };
 
-            // --- Reset Logic ---
+            // --- STREAMING_CHUNK:App Reset ---
             const resetApp = () => {
                 state.files = { shopeeBali: null, shopeeGo: null, tokoBali: null, tokoGo: null, aio: null };
                 state.results = [];
                 state.filteredResults = [];
                 state.filterStatus = 'all';
                 state.filterPlatform = 'all';
-                state.filterTime = 'all';
                 
                 Object.keys(state.files).forEach(key => {
                     elements.inputs[key].value = '';
@@ -1221,7 +1298,10 @@
 
                 elements.platformBtns[0].click(); 
                 elements.statusBtns[0].click();   
-                elements.filterTime.value = 'all'; // Reset visual select dropdown
+                
+                elements.filterMonth.innerHTML = '<option value="all">Semua Bulan</option>';
+                elements.filterStartDate.value = '';
+                elements.filterEndDate.value = '';
 
                 elements.uploadSection.classList.remove('hidden-section');
                 elements.resultsSection.classList.add('hidden-section');
@@ -1229,7 +1309,7 @@
                 hideError();
             };
 
-            // --- Event Listeners ---
+            // Event Listeners Initialization
             elements.btnAnalyze.addEventListener('click', analyzeData);
             elements.btnReset.addEventListener('click', resetApp);
             elements.btnExport.addEventListener('click', exportToXLSX); 
