@@ -394,7 +394,6 @@
             let chartInstanceStore = null;
             let chartInstanceDelivery = null;
 
-            // Memastikan Object Elements Dibangun dengan Sempurna (Syntax diperbaiki)
             const elements = {
                 inputs: {
                     shopeeBali: document.getElementById('file-shopeeBali'),
@@ -409,7 +408,6 @@
                 platformBtns: document.querySelectorAll('.platform-btn'),
                 statusBtns: document.querySelectorAll('.status-btn'),
                 
-                // Date & Time Filter Elements
                 filterMonth: document.getElementById('filter-month'),
                 filterStartDate: document.getElementById('filter-start-date'),
                 filterEndDate: document.getElementById('filter-end-date'),
@@ -421,7 +419,6 @@
                 errorText: document.getElementById('error-text'),
                 tbody: document.getElementById('table-body'),
                 
-                // Card & UI Elements
                 cards: {
                     total: document.getElementById('card-total'),
                     matched: document.getElementById('card-matched'),
@@ -456,22 +453,17 @@
                 if (!val || val === '-') return 0;
                 
                 let str = String(val).trim();
-                
-                // Deteksi nilai negatif (misal: -1000 atau (1000))
                 let isNegative = str.includes('-') || (str.includes('(') && str.includes(')'));
                 
-                // Ambil hanya angka, koma, dan titik. Buang simbol Rp, spasi, dsb.
                 str = str.replace(/[^\d.,]/g, '');
                 if (!str) return 0;
                 
-                // Buang desimal jika berakhiran ,XX atau .XX (1 hingga 2 digit di belakang)
+                // Menghapus digit desimal jika diakhiri oleh ,00 atau .00
                 if (/(,|\.)\d{1,2}$/.test(str)) {
                     str = str.replace(/(,|\.)\d{1,2}$/, '');
                 }
                 
-                // Buang semua sisa pemisah ribuan (koma atau titik)
-                str = str.replace(/[,.]/g, '');
-                
+                str = str.replace(/[,.]/g, ''); 
                 let num = parseInt(str, 10);
                 if (isNaN(num)) return 0;
                 
@@ -480,29 +472,35 @@
 
             const formatExcelDate = (val) => {
                 if (!val) return '-';
-                if (typeof val === 'string') return val.trim();
-                if (typeof val === 'number') {
-                    const excelDays = val - 25569; 
-                    const date = new Date(excelDays * 86400 * 1000);
-                    const d = String(date.getUTCDate()).padStart(2, '0');
-                    const m = String(date.getUTCMonth() + 1).padStart(2, '0');
-                    const y = date.getUTCFullYear();
-                    return `${d}/${m}/${y}`; // Returns DD/MM/YYYY
-                }
                 return String(val).trim();
             };
 
-            // Parse text date (e.g. "Senin, 01/01/2026" or "01-01-2026") into a JS Date Object
             const parseDateStr = (dateStr) => {
                 if (!dateStr || dateStr === '-') return null;
-                // Regex super pintar untuk mengekstrak hanya susunan angka tanggal/bulan/tahun
-                const match = String(dateStr).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-                if (match) {
-                    const d = parseInt(match[1], 10);
-                    const m = parseInt(match[2], 10) - 1; // JS months are 0-indexed
-                    const y = parseInt(match[3], 10);
-                    return new Date(y, m, d);
+                let s = String(dateStr).trim();
+                
+                // Coba parsing DD/MM/YYYY atau DD-MM-YYYY
+                let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+                if (m) {
+                    let d = parseInt(m[1], 10);
+                    let mo = parseInt(m[2], 10) - 1; 
+                    let y = parseInt(m[3], 10);
+                    if (y < 100) y += 2000;
+                    return new Date(y, mo, d);
                 }
+                
+                // Coba parsing YYYY-MM-DD
+                m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+                if (m) {
+                    let y = parseInt(m[1], 10);
+                    let mo = parseInt(m[2], 10) - 1; 
+                    let d = parseInt(m[3], 10);
+                    return new Date(y, mo, d);
+                }
+                
+                const fallback = new Date(s);
+                if (!isNaN(fallback.getTime())) return fallback;
+                
                 return null;
             };
 
@@ -567,7 +565,8 @@
                             const data = new Uint8Array(e.target.result);
                             const workbook = window.XLSX.read(data, { type: 'array' });
                             const firstSheet = workbook.SheetNames[0];
-                            const sheetData = window.XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 });
+                            // PERBAIKAN RAW: FALSE => Memaksa nomor Tokopedia dibaca sebagai teks utuh agar tidak ada angka yang terpotong.
+                            const sheetData = window.XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1, raw: false, defval: "" });
                             resolve(sheetData);
                         } catch (err) {
                             reject(err);
@@ -695,9 +694,16 @@
                     const aioRecords = processAIO(data5);
                     const finalResults = [];
 
-                    // 1. Pencocokan Data Shopee & Tokopedia
+                    // 1. Pencocokan Data Shopee & Tokopedia (Pembersihan Spasi agar match)
                     combinedOrders.forEach(order => {
-                        const matchedAio = aioRecords.find(aio => !aio.used && aio.text.includes(order.orderId));
+                        const orderIdClean = order.orderId.toUpperCase().replace(/\s+/g, '');
+                        
+                        const matchedAio = aioRecords.find(aio => {
+                            if (aio.used) return false;
+                            const aioTextClean = aio.text.toUpperCase().replace(/\s+/g, '');
+                            return aioTextClean.includes(orderIdClean);
+                        });
+                        
                         const deliveryCategory = classifyDelivery(order.delivery, order.platform);
 
                         if (matchedAio) {
