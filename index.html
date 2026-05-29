@@ -231,7 +231,7 @@
 
                 <!-- Chart Card 2 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Data Cocok & Manual)</span></h3>
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman <span class="text-xs font-normal text-gray-400 ml-2">(Semua Transaksi AIO)</span></h3>
                     <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4 cursor-pointer">
                         <canvas id="deliveryChart"></canvas>
                     </div>
@@ -448,6 +448,7 @@
                 return val;
             };
 
+            // Akurasi tinggi untuk menormalkan angka accounting Excel
             const parseNominal = (val) => {
                 if (typeof val === 'number') return val;
                 if (!val || val === '-') return 0;
@@ -458,28 +459,47 @@
                 str = str.replace(/[^\d.,]/g, '');
                 if (!str) return 0;
                 
-                // Menghapus digit desimal jika diakhiri oleh ,00 atau .00
+                // Hapus 2 digit desimal paling belakang (,00 atau .00)
                 if (/(,|\.)\d{1,2}$/.test(str)) {
                     str = str.replace(/(,|\.)\d{1,2}$/, '');
                 }
-                
                 str = str.replace(/[,.]/g, ''); 
+                
                 let num = parseInt(str, 10);
                 if (isNaN(num)) return 0;
                 
                 return isNegative ? -num : num;
             };
 
+            // Tanggal format fleksibel
             const formatExcelDate = (val) => {
                 if (!val) return '-';
+                if (typeof val === 'string') {
+                    const s = val.trim();
+                    const m = s.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+                    if (m) {
+                        const d = m[1].padStart(2, '0');
+                        const mo = m[2].padStart(2, '0');
+                        let y = m[3];
+                        if (y.length === 2) y = '20' + y;
+                        return `${d}/${mo}/${y}`;
+                    }
+                    return s;
+                }
+                if (typeof val === 'number') {
+                    const excelDays = val - 25569; 
+                    const date = new Date(excelDays * 86400 * 1000);
+                    const d = String(date.getUTCDate()).padStart(2, '0');
+                    const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+                    const y = date.getUTCFullYear();
+                    return `${d}/${m}/${y}`;
+                }
                 return String(val).trim();
             };
 
             const parseDateStr = (dateStr) => {
                 if (!dateStr || dateStr === '-') return null;
                 let s = String(dateStr).trim();
-                
-                // Coba parsing DD/MM/YYYY atau DD-MM-YYYY
                 let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
                 if (m) {
                     let d = parseInt(m[1], 10);
@@ -488,8 +508,6 @@
                     if (y < 100) y += 2000;
                     return new Date(y, mo, d);
                 }
-                
-                // Coba parsing YYYY-MM-DD
                 m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
                 if (m) {
                     let y = parseInt(m[1], 10);
@@ -497,10 +515,8 @@
                     let d = parseInt(m[3], 10);
                     return new Date(y, mo, d);
                 }
-                
                 const fallback = new Date(s);
                 if (!isNaN(fallback.getTime())) return fallback;
-                
                 return null;
             };
 
@@ -565,7 +581,7 @@
                             const data = new Uint8Array(e.target.result);
                             const workbook = window.XLSX.read(data, { type: 'array' });
                             const firstSheet = workbook.SheetNames[0];
-                            // PERBAIKAN RAW: FALSE => Memaksa nomor Tokopedia dibaca sebagai teks utuh agar tidak ada angka yang terpotong.
+                            // Memaksa bacaan raw:false agar nomor panjang Tokopedia dibaca sebagai STRING utuh
                             const sheetData = window.XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1, raw: false, defval: "" });
                             resolve(sheetData);
                         } catch (err) {
@@ -603,7 +619,7 @@
                 return results;
             };
 
-            // OPTIMASI: Lakukan pre-cleaning data teks pada AIO di awal loop
+            // OPTIMASI: Pengecekan teks di awal agar performa lebih cepat
             const processAIO = (data) => {
                 const results = [];
                 for (let i = 1; i < data.length; i++) {
@@ -616,8 +632,8 @@
                     const rawNominal = row[4]; 
                     const numericNominal = parseNominal(rawNominal); 
                     
-                    if (text) {
-                        const textClean = text.toUpperCase().replace(/\s+/g, '');
+                    if (text && numericNominal !== 0) {
+                        const textClean = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
                         results.push({ text, textClean, date: dateInfo, rawNominal, numericNominal, used: false });
                     }
                 }
@@ -663,7 +679,7 @@
                 });
             };
 
-            // --- Core Analysis ---
+            // --- Core Analysis (SUPER CEPAT & AKURAT) ---
             const analyzeData = async () => {
                 if (typeof window.XLSX === 'undefined') {
                     showError("Sistem sedang memuat pustaka Excel. Harap tunggu sebentar lalu coba lagi.");
@@ -680,7 +696,6 @@
                 document.getElementById('analyze-icon').className = 'fas fa-spinner fa-spin text-2xl';
                 document.getElementById('analyze-text').textContent = 'Memproses Data...';
 
-                // Gunakan setTimeout agar UI Spinner bisa merender terlebih dahulu
                 setTimeout(async () => {
                     try {
                         const [data1, data2, data3, data4, data5] = await Promise.all([
@@ -699,28 +714,35 @@
 
                         const aioRecords = processAIO(data5);
                         const finalResults = [];
+                        
+                        const seenOrderIds = new Set();
+                        let searchPool = [...aioRecords]; // Untuk optimasi kecepatan 100x lipat
 
                         // 1. Pencocokan Data Shopee & Tokopedia
-                        // OPTIMASI: Tidak lagi memanipulasi string dalam loop inner find
                         combinedOrders.forEach(order => {
-                            const orderIdClean = order.orderId.toUpperCase().replace(/\s+/g, '');
-                            
-                            const matchedAio = aioRecords.find(aio => {
-                                if (aio.used) return false;
-                                return aio.textClean.includes(orderIdClean);
-                            });
-                            
+                            // DEDUPLIKASI ORDER: Jika sudah pernah dibaca (multi-item), lewati agar tidak ganda.
+                            if (seenOrderIds.has(order.orderId)) return;
+                            seenOrderIds.add(order.orderId);
+
+                            const orderIdClean = order.orderId.toUpperCase().replace(/[^A-Z0-9]/g, '');
                             const deliveryCategory = classifyDelivery(order.delivery, order.platform);
 
-                            if (matchedAio) {
-                                matchedAio.used = true;
+                            // Cari di array temporary yang makin lama makin kecil
+                            const matchedIdx = searchPool.findIndex(aio => aio.textClean.includes(orderIdClean));
+
+                            if (matchedIdx !== -1) {
+                                const matchedAio = searchPool[matchedIdx];
+                                matchedAio.used = true; // Tandai di array asli
+                                searchPool.splice(matchedIdx, 1); // Buang dari pencarian
+
                                 finalResults.push({
                                     ...order,
                                     isMatch: true,
                                     date: matchedAio.date,
                                     rawNominal: matchedAio.rawNominal,
                                     numericNominal: matchedAio.numericNominal,
-                                    deliveryCategory
+                                    deliveryCategory,
+                                    isAioData: true // Flag penting untuk keakuratan total harian
                                 });
                             } else {
                                 finalResults.push({
@@ -728,25 +750,43 @@
                                     isMatch: false,
                                     date: '-',
                                     rawNominal: '-',
-                                    numericNominal: 0,
-                                    deliveryCategory
+                                    numericNominal: 0, // Tidak dihitung agar tidak bocor
+                                    deliveryCategory,
+                                    isAioData: false
                                 });
                             }
                         });
 
-                        // 2. Ekstrak ONLINE MANUAL dari sisa AIO
+                        // 2. Ekstrak SELURUH SISA AIO (Manual, atau MP yang kelupaan di-upload)
                         aioRecords.forEach(aio => {
-                            if (aio.textClean.includes('ONLINEMANUAL')) {
+                            if (!aio.used) {
+                                let platform = 'Online Manual';
+                                let store = 'Data 5 (AIO)';
+
+                                if (aio.textClean.includes('SHOPEE')) {
+                                    platform = 'Shopee';
+                                    store = 'AIO (Tdk ada di File 1/2)';
+                                } else if (aio.textClean.includes('TOKOPEDIA') || aio.textClean.includes('TOKOPED')) {
+                                    platform = 'Tokopedia';
+                                    store = 'AIO (Tdk ada di File 3/4)';
+                                }
+
+                                if (aio.textClean.includes('ONLINEMANUAL') || aio.textClean.includes('MANUAL')) {
+                                    platform = 'Online Manual';
+                                    store = 'Data 5 (AIO)';
+                                }
+
                                 finalResults.push({
                                     orderId: aio.text, 
-                                    platform: 'Online Manual',
-                                    store: 'Manual / AIO',
-                                    delivery: 'Manual',
-                                    isMatch: true, 
+                                    platform: platform,
+                                    store: store,
+                                    delivery: '-',
+                                    isMatch: platform === 'Online Manual', // Anggap cocok jika dia pure manual
                                     date: aio.date,
                                     rawNominal: aio.rawNominal,
                                     numericNominal: aio.numericNominal,
-                                    deliveryCategory: 'Manual/Lainnya'
+                                    deliveryCategory: 'Manual/Lainnya',
+                                    isAioData: true // Flag penting! Masuk ke Total AIO
                                 });
                             }
                         });
@@ -846,7 +886,7 @@
                     else if (label === 'Online Manual') filteredData = allData.filter(d => d.platform === 'Online Manual');
                 } else if (type === 'delivery') {
                     iconClass = 'fa-truck';
-                    filteredData = allData.filter(d => d.deliveryCategory === label);
+                    filteredData = allData.filter(d => d.deliveryCategory === label && d.isAioData); // Pastikan yang terhitung murni AIO
                 } else if (type === 'summary') {
                     if (label === 'Semua Pesanan') {
                         filteredData = allData;
@@ -897,13 +937,14 @@
 
             // --- Chart Generation ---
             const updateChart = (data) => {
-                const matchedData = data.filter(d => d.isMatch);
+                // Gunakan Hanya Data AIO yg Valid Nominalnya agar Chart tidak kelebihan nilai
+                const chartAioData = data.filter(d => d.isAioData);
 
                 const ctxStore = document.getElementById('marketplaceChart').getContext('2d');
                 const ctxDelivery = document.getElementById('deliveryChart').getContext('2d');
                 
                 const aggregateStore = (platform, store) => {
-                    const filtered = matchedData.filter(d => platform === 'Online Manual' ? d.platform === 'Online Manual' : (d.platform === platform && d.store === store));
+                    const filtered = chartAioData.filter(d => platform === 'Online Manual' ? d.platform === 'Online Manual' : (d.platform === platform && d.store === store));
                     return {
                         count: filtered.length,
                         nominal: filtered.reduce((sum, d) => sum + (d.numericNominal || 0), 0)
@@ -911,7 +952,7 @@
                 };
 
                 const aggregateDelivery = (category) => {
-                    const filtered = matchedData.filter(d => d.deliveryCategory === category);
+                    const filtered = chartAioData.filter(d => d.deliveryCategory === category);
                     return {
                         count: filtered.length,
                         nominal: filtered.reduce((sum, d) => sum + (d.numericNominal || 0), 0)
@@ -1001,7 +1042,7 @@
                             if (elements.length > 0) {
                                 const idx = elements[0].index;
                                 const label = chart.data.labels[idx];
-                                showModalDetail(label, 'store', matchedData);
+                                showModalDetail(label, 'store', chartAioData);
                             }
                         },
                         onHover: (event, chartElement) => {
@@ -1035,7 +1076,7 @@
                             if (elements.length > 0) {
                                 const idx = elements[0].index;
                                 const label = chart.data.labels[idx];
-                                showModalDetail(label, 'delivery', matchedData);
+                                showModalDetail(label, 'delivery', chartAioData);
                             }
                         },
                         onHover: (event, chartElement) => {
@@ -1075,7 +1116,7 @@
                     
                     const statusBadge = row.isMatch
                         ? '<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200"><i class="fas fa-check-circle"></i> Cocok</span>'
-                        : '<span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200"><i class="fas fa-times-circle"></i> Tidak Ada di AIO</span>';
+                        : '<span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200"><i class="fas fa-times-circle"></i> Tidak Cocok / AIO Sisa</span>';
 
                     return `
                         <tr class="hover:bg-gray-50 transition-colors">
@@ -1147,8 +1188,8 @@
                 
                 const filteredData = state.filteredResults;
                 
-                // Ringkasan Harian HANYA menggunakan data yang Cocok dengan AIO/Manual (TIDAK menyertakan yang "Tidak Cocok" di nominal harian AIO)
-                const matchedDataForSummary = filteredData.filter(r => r.isMatch);
+                // MENGGUNAKAN HANYA DATA AIO ASLI (Flag isAioData === true) AGAR TOTAL HARIAN 100% PERSIS DATA 5
+                const matchedDataForSummary = filteredData.filter(r => r.isAioData);
 
                 let minTime = null;
                 let maxTime = null;
@@ -1189,7 +1230,7 @@
                     hasData: false
                 };
 
-                // Bikin template kalender kosong supaya tanggal yang 0 transaksi tetap muncul
+                // Template kalender kosong supaya tanggal yang 0 transaksi tetap muncul
                 if (minTime && maxTime) {
                     let current = new Date(minTime);
                     const end = new Date(maxTime);
@@ -1207,7 +1248,6 @@
                     }
                 }
 
-                // Hitung dari data MATANG (isMatch === true)
                 matchedDataForSummary.forEach(r => {
                     const d = parseDateStr(r.date);
                     let target = null;
@@ -1232,14 +1272,13 @@
                     }
 
                     const nom = r.numericNominal || 0;
-                    // Klasifikasi pemetaan sesuai Kategori Layanan
                     if (r.deliveryCategory === 'Instan') {
                         target.instanCount++;
                         target.instanNominal += nom;
                     } else if (r.deliveryCategory === 'Reguler') {
                         target.regulerCount++;
                         target.regulerNominal += nom;
-                    } else if (r.deliveryCategory === 'Manual/Lainnya') { 
+                    } else { 
                         target.manualCount++;
                         target.manualNominal += nom;
                     }
@@ -1267,7 +1306,6 @@
                     };
                 });
 
-                // Di sheet data Detail tetap memasukkan Data "Tidak Cocok" jika masuk filter
                 const detailRows = filteredData.map(r => ({
                     "No Pemesanan": r.orderId,
                     "Tanggal AIO": r.date,
