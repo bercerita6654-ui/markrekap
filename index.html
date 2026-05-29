@@ -188,7 +188,7 @@
                     <div class="flex items-center gap-4 mb-2">
                         <div class="bg-blue-100 p-3 rounded-xl text-blue-600"><i class="fas fa-receipt text-xl"></i></div>
                         <div>
-                            <p class="text-gray-600 font-semibold">Total Semua Pesanan</p>
+                            <p class="text-gray-600 font-semibold">Semua Baris Excel</p>
                             <p class="text-[10px] text-blue-500 font-medium">(Klik untuk detail)</p>
                         </div>
                     </div>
@@ -199,7 +199,7 @@
                     <div class="flex items-center gap-4 mb-2">
                         <div class="bg-green-100 p-3 rounded-xl text-green-600"><i class="fas fa-check-circle text-xl"></i></div>
                         <div>
-                            <p class="text-gray-600 font-semibold">Data Cocok & Manual</p>
+                            <p class="text-gray-600 font-semibold">Total Baris Cocok</p>
                             <p class="text-[10px] text-green-600 font-medium">(Klik untuk detail)</p>
                         </div>
                     </div>
@@ -210,7 +210,7 @@
                     <div class="flex items-center gap-4 mb-2">
                         <div class="bg-red-100 p-3 rounded-xl text-red-600"><i class="fas fa-times-circle text-xl"></i></div>
                         <div>
-                            <p class="text-gray-600 font-semibold">Data Tidak Cocok</p>
+                            <p class="text-gray-600 font-semibold">Total Baris Tdk Cocok</p>
                             <p class="text-[10px] text-red-500 font-medium">(Klik untuk detail)</p>
                         </div>
                     </div>
@@ -221,7 +221,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Chart Card 1 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Proporsi Toko & Marketplace <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Data Cocok & Manual)</span></h3>
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Proporsi Toko & Marketplace <span class="text-xs font-normal text-gray-400 ml-2">(Sesuai Qty Asli AIO)</span></h3>
                     <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4 cursor-pointer">
                         <canvas id="marketplaceChart"></canvas>
                     </div>
@@ -231,7 +231,7 @@
 
                 <!-- Chart Card 2 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman <span class="text-xs font-normal text-gray-400 ml-2">(Semua Transaksi AIO)</span></h3>
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman <span class="text-xs font-normal text-gray-400 ml-2">(Sesuai Qty Asli AIO)</span></h3>
                     <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4 cursor-pointer">
                         <canvas id="deliveryChart"></canvas>
                     </div>
@@ -633,6 +633,7 @@
                     const numericNominal = parseNominal(rawNominal); 
                     
                     if (text && numericNominal !== 0) {
+                        // Hilangkan SEMUA spasi, strip, dan simbol khusus agar match super kuat
                         const textClean = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
                         results.push({ text, textClean, date: dateInfo, rawNominal, numericNominal, used: false });
                     }
@@ -717,10 +718,11 @@
                         
                         // 1. Pencocokan Data Shopee & Tokopedia (Semua Baris Ditampilkan)
                         combinedOrders.forEach(order => {
+                            // Sama seperti AIO, orderId dibersihkan dari segala strip dan spasi
                             const orderIdClean = order.orderId.toUpperCase().replace(/[^A-Z0-9]/g, '');
                             const deliveryCategory = classifyDelivery(order.delivery, order.platform);
 
-                            // Cari di data AIO
+                            // Cari di data AIO (Tanpa Membuang yang Sudah Used agar Multi-Item Terdeteksi)
                             const matchedAio = aioRecords.find(aio => aio.textClean.includes(orderIdClean));
 
                             if (matchedAio) {
@@ -755,6 +757,7 @@
                                 let platform = 'Online Manual';
                                 let store = 'Data 5 (AIO)';
 
+                                // Sedikit pelabelan pintar jika teks AIO ada kata kuncinya
                                 if (aio.textClean.includes('SHOPEE')) {
                                     platform = 'Shopee';
                                     store = 'AIO (Tdk ada di File 1/2)';
@@ -763,6 +766,7 @@
                                     store = 'AIO (Tdk ada di File 3/4)';
                                 }
 
+                                // Default fallback ke Online Manual jika user minta
                                 if (aio.textClean.includes('ONLINEMANUAL') || aio.textClean.includes('MANUAL')) {
                                     platform = 'Online Manual';
                                     store = 'Data 5 (AIO)';
@@ -869,19 +873,22 @@
                 let iconClass = 'fa-list';
                 let iconColor = 'text-blue-500';
 
+                // Di Modal kita hanya memunculkan data isAioData (Transaksi Tunggal) agar jumlah item = Chart
+                const aioDataOnly = allData.filter(d => d.isAioData);
+
                 if (type === 'store') {
                     iconClass = 'fa-store';
-                    if (label === 'Shopee Balistationery') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'Bali Stationery');
-                    else if (label === 'Shopee Gomall') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'GoMall');
-                    else if (label === 'Toped Balistationery') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'Bali Stationery');
-                    else if (label === 'Toped Gomall') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'GoMall');
-                    else if (label === 'Online Manual') filteredData = allData.filter(d => d.platform === 'Online Manual');
+                    if (label === 'Shopee Balistationery') filteredData = aioDataOnly.filter(d => d.platform === 'Shopee' && d.store === 'Bali Stationery');
+                    else if (label === 'Shopee Gomall') filteredData = aioDataOnly.filter(d => d.platform === 'Shopee' && d.store === 'GoMall');
+                    else if (label === 'Toped Balistationery') filteredData = aioDataOnly.filter(d => d.platform === 'Tokopedia' && d.store === 'Bali Stationery');
+                    else if (label === 'Toped Gomall') filteredData = aioDataOnly.filter(d => d.platform === 'Tokopedia' && d.store === 'GoMall');
+                    else if (label === 'Online Manual') filteredData = aioDataOnly.filter(d => d.platform === 'Online Manual');
                 } else if (type === 'delivery') {
                     iconClass = 'fa-truck';
-                    filteredData = allData.filter(d => d.deliveryCategory === label && d.isAioData); // Pastikan yang terhitung murni AIO
+                    filteredData = aioDataOnly.filter(d => d.deliveryCategory === label);
                 } else if (type === 'summary') {
                     if (label === 'Semua Pesanan') {
-                        filteredData = allData;
+                        filteredData = allData; // Ini untuk show semua raw lines
                         iconClass = 'fa-receipt';
                         iconColor = 'text-blue-600';
                     } else if (label === 'Data Cocok & Manual') {
