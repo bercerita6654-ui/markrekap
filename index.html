@@ -603,6 +603,7 @@
                 return results;
             };
 
+            // OPTIMASI: Lakukan pre-cleaning data teks pada AIO di awal loop
             const processAIO = (data) => {
                 const results = [];
                 for (let i = 1; i < data.length; i++) {
@@ -615,7 +616,10 @@
                     const rawNominal = row[4]; 
                     const numericNominal = parseNominal(rawNominal); 
                     
-                    if (text) results.push({ text, date: dateInfo, rawNominal, numericNominal, used: false });
+                    if (text) {
+                        const textClean = text.toUpperCase().replace(/\s+/g, '');
+                        results.push({ text, textClean, date: dateInfo, rawNominal, numericNominal, used: false });
+                    }
                 }
                 return results;
             };
@@ -676,97 +680,100 @@
                 document.getElementById('analyze-icon').className = 'fas fa-spinner fa-spin text-2xl';
                 document.getElementById('analyze-text').textContent = 'Memproses Data...';
 
-                try {
-                    const [data1, data2, data3, data4, data5] = await Promise.all([
-                        readExcel(state.files.shopeeBali),
-                        readExcel(state.files.shopeeGo),
-                        readExcel(state.files.tokoBali),
-                        readExcel(state.files.tokoGo),
-                        readExcel(state.files.aio)
-                    ]);
+                // Gunakan setTimeout agar UI Spinner bisa merender terlebih dahulu
+                setTimeout(async () => {
+                    try {
+                        const [data1, data2, data3, data4, data5] = await Promise.all([
+                            readExcel(state.files.shopeeBali),
+                            readExcel(state.files.shopeeGo),
+                            readExcel(state.files.tokoBali),
+                            readExcel(state.files.tokoGo),
+                            readExcel(state.files.aio)
+                        ]);
 
-                    let combinedOrders = [];
-                    if (data1.length) combinedOrders = combinedOrders.concat(processShopee(data1, 'Bali Stationery'));
-                    if (data2.length) combinedOrders = combinedOrders.concat(processShopee(data2, 'GoMall'));
-                    if (data3.length) combinedOrders = combinedOrders.concat(processTokopedia(data3, 'Bali Stationery'));
-                    if (data4.length) combinedOrders = combinedOrders.concat(processTokopedia(data4, 'GoMall'));
+                        let combinedOrders = [];
+                        if (data1.length) combinedOrders = combinedOrders.concat(processShopee(data1, 'Bali Stationery'));
+                        if (data2.length) combinedOrders = combinedOrders.concat(processShopee(data2, 'GoMall'));
+                        if (data3.length) combinedOrders = combinedOrders.concat(processTokopedia(data3, 'Bali Stationery'));
+                        if (data4.length) combinedOrders = combinedOrders.concat(processTokopedia(data4, 'GoMall'));
 
-                    const aioRecords = processAIO(data5);
-                    const finalResults = [];
+                        const aioRecords = processAIO(data5);
+                        const finalResults = [];
 
-                    // 1. Pencocokan Data Shopee & Tokopedia (Pembersihan Spasi agar match)
-                    combinedOrders.forEach(order => {
-                        const orderIdClean = order.orderId.toUpperCase().replace(/\s+/g, '');
-                        
-                        const matchedAio = aioRecords.find(aio => {
-                            if (aio.used) return false;
-                            const aioTextClean = aio.text.toUpperCase().replace(/\s+/g, '');
-                            return aioTextClean.includes(orderIdClean);
+                        // 1. Pencocokan Data Shopee & Tokopedia
+                        // OPTIMASI: Tidak lagi memanipulasi string dalam loop inner find
+                        combinedOrders.forEach(order => {
+                            const orderIdClean = order.orderId.toUpperCase().replace(/\s+/g, '');
+                            
+                            const matchedAio = aioRecords.find(aio => {
+                                if (aio.used) return false;
+                                return aio.textClean.includes(orderIdClean);
+                            });
+                            
+                            const deliveryCategory = classifyDelivery(order.delivery, order.platform);
+
+                            if (matchedAio) {
+                                matchedAio.used = true;
+                                finalResults.push({
+                                    ...order,
+                                    isMatch: true,
+                                    date: matchedAio.date,
+                                    rawNominal: matchedAio.rawNominal,
+                                    numericNominal: matchedAio.numericNominal,
+                                    deliveryCategory
+                                });
+                            } else {
+                                finalResults.push({
+                                    ...order,
+                                    isMatch: false,
+                                    date: '-',
+                                    rawNominal: '-',
+                                    numericNominal: 0,
+                                    deliveryCategory
+                                });
+                            }
                         });
+
+                        // 2. Ekstrak ONLINE MANUAL dari sisa AIO
+                        aioRecords.forEach(aio => {
+                            if (aio.textClean.includes('ONLINEMANUAL')) {
+                                finalResults.push({
+                                    orderId: aio.text, 
+                                    platform: 'Online Manual',
+                                    store: 'Manual / AIO',
+                                    delivery: 'Manual',
+                                    isMatch: true, 
+                                    date: aio.date,
+                                    rawNominal: aio.rawNominal,
+                                    numericNominal: aio.numericNominal,
+                                    deliveryCategory: 'Manual/Lainnya'
+                                });
+                            }
+                        });
+
+                        if (finalResults.length === 0) {
+                            throw new Error("Tidak ada data pesanan yang ditemukan untuk dianalisa.");
+                        }
+
+                        state.results = finalResults;
+
+                        populateMonthDropdown(finalResults);
+
+                        elements.uploadSection.classList.add('hidden-section');
+                        elements.resultsSection.classList.remove('hidden-section');
+                        elements.btnReset.classList.remove('hidden-section');
                         
-                        const deliveryCategory = classifyDelivery(order.delivery, order.platform);
+                        applyFilters();
 
-                        if (matchedAio) {
-                            matchedAio.used = true;
-                            finalResults.push({
-                                ...order,
-                                isMatch: true,
-                                date: matchedAio.date,
-                                rawNominal: matchedAio.rawNominal,
-                                numericNominal: matchedAio.numericNominal,
-                                deliveryCategory
-                            });
-                        } else {
-                            finalResults.push({
-                                ...order,
-                                isMatch: false,
-                                date: '-',
-                                rawNominal: '-',
-                                numericNominal: 0,
-                                deliveryCategory
-                            });
-                        }
-                    });
-
-                    // 2. Ekstrak ONLINE MANUAL dari sisa AIO
-                    aioRecords.forEach(aio => {
-                        if (aio.text.toUpperCase().includes('ONLINE MANUAL')) {
-                            finalResults.push({
-                                orderId: aio.text, 
-                                platform: 'Online Manual',
-                                store: 'Manual / AIO',
-                                delivery: 'Manual',
-                                isMatch: true, 
-                                date: aio.date,
-                                rawNominal: aio.rawNominal,
-                                numericNominal: aio.numericNominal,
-                                deliveryCategory: 'Manual/Lainnya'
-                            });
-                        }
-                    });
-
-                    if (finalResults.length === 0) {
-                        throw new Error("Tidak ada data pesanan yang ditemukan untuk dianalisa.");
+                    } catch (err) {
+                        console.error(err);
+                        showError(err.message || "Terjadi kesalahan saat memproses data.");
+                    } finally {
+                        elements.btnAnalyze.disabled = false;
+                        document.getElementById('analyze-icon').className = 'fas fa-cog text-2xl';
+                        document.getElementById('analyze-text').textContent = 'Mulai Analisis Data';
                     }
-
-                    state.results = finalResults;
-
-                    populateMonthDropdown(finalResults);
-
-                    elements.uploadSection.classList.add('hidden-section');
-                    elements.resultsSection.classList.remove('hidden-section');
-                    elements.btnReset.classList.remove('hidden-section');
-                    
-                    applyFilters();
-
-                } catch (err) {
-                    console.error(err);
-                    showError(err.message || "Terjadi kesalahan saat memproses data.");
-                } finally {
-                    elements.btnAnalyze.disabled = false;
-                    document.getElementById('analyze-icon').className = 'fas fa-cog text-2xl';
-                    document.getElementById('analyze-text').textContent = 'Mulai Analisis Data';
-                }
+                }, 100);
             };
 
             // --- Filtering Logic ---
@@ -1225,13 +1232,14 @@
                     }
 
                     const nom = r.numericNominal || 0;
+                    // Klasifikasi pemetaan sesuai Kategori Layanan
                     if (r.deliveryCategory === 'Instan') {
                         target.instanCount++;
                         target.instanNominal += nom;
                     } else if (r.deliveryCategory === 'Reguler') {
                         target.regulerCount++;
                         target.regulerNominal += nom;
-                    } else { 
+                    } else if (r.deliveryCategory === 'Manual/Lainnya') { 
                         target.manualCount++;
                         target.manualNominal += nom;
                     }
