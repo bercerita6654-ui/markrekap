@@ -186,10 +186,10 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div id="card-total" class="cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl shadow-sm border border-blue-100 flex flex-col justify-center">
                     <div class="flex items-center gap-4 mb-2">
-                        <div class="bg-blue-100 p-3 rounded-xl text-blue-600"><i class="fas fa-receipt text-xl"></i></div>
+                        <div class="bg-blue-100 p-3 rounded-xl text-blue-600"><i class="fas fa-list text-xl"></i></div>
                         <div>
-                            <p class="text-gray-600 font-semibold">Total Semua Pesanan AIO</p>
-                            <p class="text-[10px] text-blue-500 font-medium">(Klik untuk detail)</p>
+                            <p class="text-gray-600 font-semibold">Total Baris Data (Tabel)</p>
+                            <p class="text-[10px] text-blue-500 font-medium">(Termasuk Item Gabungan)</p>
                         </div>
                     </div>
                     <h3 id="count-total" class="text-4xl font-bold text-blue-900 ml-16">0</h3>
@@ -199,8 +199,8 @@
                     <div class="flex items-center gap-4 mb-2">
                         <div class="bg-green-100 p-3 rounded-xl text-green-600"><i class="fas fa-check-circle text-xl"></i></div>
                         <div>
-                            <p class="text-gray-600 font-semibold">Data AIO Valid Terdeteksi</p>
-                            <p class="text-[10px] text-green-600 font-medium">(Klik untuk detail)</p>
+                            <p class="text-gray-600 font-semibold">Total Transaksi AIO (Cocok)</p>
+                            <p class="text-[10px] text-green-600 font-medium">(Klik untuk detail riil AIO)</p>
                         </div>
                     </div>
                     <h3 id="count-matched" class="text-4xl font-bold text-green-700 ml-16">0</h3>
@@ -210,8 +210,8 @@
                     <div class="flex items-center gap-4 mb-2">
                         <div class="bg-red-100 p-3 rounded-xl text-red-600"><i class="fas fa-times-circle text-xl"></i></div>
                         <div>
-                            <p class="text-gray-600 font-semibold">Pesanan Tdk Ada di AIO</p>
-                            <p class="text-[10px] text-red-500 font-medium">(Klik untuk detail)</p>
+                            <p class="text-gray-600 font-semibold">Pesanan Belum Masuk AIO</p>
+                            <p class="text-[10px] text-red-500 font-medium">(Tidak Ditemukan di Data 5)</p>
                         </div>
                     </div>
                     <h3 id="count-unmatched" class="text-4xl font-bold text-red-700 ml-16">0</h3>
@@ -221,7 +221,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Chart Card 1 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Proporsi Toko & Marketplace <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Data AIO)</span></h3>
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Proporsi Toko & Marketplace <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Acuan AIO)</span></h3>
                     <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4 cursor-pointer">
                         <canvas id="marketplaceChart"></canvas>
                     </div>
@@ -231,7 +231,7 @@
 
                 <!-- Chart Card 2 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Data AIO)</span></h3>
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Acuan AIO)</span></h3>
                     <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4 cursor-pointer">
                         <canvas id="deliveryChart"></canvas>
                     </div>
@@ -469,29 +469,50 @@
                 return isNegative ? -num : num;
             };
 
-            const parseExcelDateToJS = (dateStr) => {
+            const formatExcelDate = (val) => {
+                if (!val) return '-';
+                if (typeof val === 'string') {
+                    const s = val.trim();
+                    const m = s.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+                    if (m) {
+                        const d = m[1].padStart(2, '0');
+                        const mo = m[2].padStart(2, '0');
+                        let y = m[3];
+                        if (y.length === 2) y = '20' + y;
+                        return `${d}/${mo}/${y}`;
+                    }
+                    return s;
+                }
+                if (typeof val === 'number') {
+                    const excelDays = val - 25569; 
+                    const date = new Date(excelDays * 86400 * 1000);
+                    const d = String(date.getUTCDate()).padStart(2, '0');
+                    const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+                    const y = date.getUTCFullYear();
+                    return `${d}/${m}/${y}`;
+                }
+                return String(val).trim();
+            };
+
+            const parseDateStr = (dateStr) => {
                 if (!dateStr || dateStr === '-') return null;
                 let s = String(dateStr).trim();
                 
-                // Pisahkan tanggal, buang jam di belakangnya (jika ada spasi)
-                s = s.split(' ')[0];
-
-                // Cek format DD/MM/YYYY atau DD-MM-YYYY
                 let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
                 if (m) {
-                    // Pastikan kalau YYYY di depan, parse dengan benar
-                    if (m[1].length === 4) {
-                        let y = parseInt(m[1], 10);
-                        let mo = parseInt(m[2], 10) - 1; 
-                        let d = parseInt(m[3], 10);
-                        return new Date(y, mo, d);
-                    } else {
-                        let d = parseInt(m[1], 10);
-                        let mo = parseInt(m[2], 10) - 1; 
-                        let y = parseInt(m[3], 10);
-                        if (y < 100) y += 2000;
-                        return new Date(y, mo, d);
-                    }
+                    let d = parseInt(m[1], 10);
+                    let mo = parseInt(m[2], 10) - 1; 
+                    let y = parseInt(m[3], 10);
+                    if (y < 100) y += 2000;
+                    return new Date(y, mo, d);
+                }
+                
+                m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+                if (m) {
+                    let y = parseInt(m[1], 10);
+                    let mo = parseInt(m[2], 10) - 1; 
+                    let d = parseInt(m[3], 10);
+                    return new Date(y, mo, d);
                 }
                 
                 const fallback = new Date(s);
@@ -577,7 +598,7 @@
                     const row = data[i];
                     if (!row || row.length === 0) continue;
                     const orderId = String(row[0] || '').trim();
-                    if (!orderId || orderId.length < 8) continue; // PENGAMAN ANTI-KOSONG
+                    if (!orderId || orderId.length < 8) continue;
                     const delivery = String(row[5] || '').trim();
                     results.push({ orderId, platform: 'Shopee', store: storeName, delivery });
                 }
@@ -590,7 +611,7 @@
                     const row = data[i];
                     if (!row || row.length === 0) continue;
                     const orderId = String(row[0] || '').trim();
-                    if (!orderId || orderId.length < 8) continue; // PENGAMAN ANTI-KOSONG
+                    if (!orderId || orderId.length < 8) continue;
                     const delivery = String(row[40] || '').trim();
                     results.push({ orderId, platform: 'Tokopedia', store: storeName, delivery });
                 }
@@ -603,15 +624,16 @@
                     const row = data[i];
                     if (!row || row.length === 0) continue;
                     
-                    const dateInfo = String(row[1] || '').trim(); // Biarkan utuh format aslinya
-                    const dateObj = parseExcelDateToJS(dateInfo); // Parse untuk filter
-                    
+                    const rawDate = row[1]; 
+                    const dateInfo = formatExcelDate(rawDate); 
                     const text = String(row[2] || '').trim(); 
                     const rawNominal = row[4]; 
                     const numericNominal = parseNominal(rawNominal); 
                     
                     if (text && numericNominal !== 0) {
                         const textClean = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                        // Buat object date agar bisa difilter
+                        const dateObj = parseDateStr(dateInfo);
                         results.push({ text, textClean, date: dateInfo, dateObj, rawNominal, numericNominal, used: false });
                     }
                 }
@@ -655,7 +677,7 @@
                 });
             };
 
-            // --- Core Analysis (DATA 5 MASTER APPROACH) ---
+            // --- Core Analysis (FULL DATA APPROACH) ---
             const analyzeData = async () => {
                 if (typeof window.XLSX === 'undefined') {
                     showError("Sistem sedang memuat pustaka Excel. Harap tunggu sebentar lalu coba lagi.");
@@ -688,48 +710,66 @@
                         if (data3.length) rawCombinedOrders = rawCombinedOrders.concat(processTokopedia(data3, 'Bali Stationery'));
                         if (data4.length) rawCombinedOrders = rawCombinedOrders.concat(processTokopedia(data4, 'GoMall'));
 
-                        // KAMUS REFERENSI (Hapus ID Duplikat di MP agar tidak membingungkan sistem)
-                        const uniqueOrdersMap = new Map();
-                        rawCombinedOrders.forEach(order => {
-                            const orderIdClean = order.orderId.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                            if (orderIdClean.length >= 8 && !uniqueOrdersMap.has(orderIdClean)) {
-                                order.orderIdClean = orderIdClean; 
-                                uniqueOrdersMap.set(orderIdClean, order);
-                            }
-                        });
-                        const combinedOrders = Array.from(uniqueOrdersMap.values());
-
                         const aioRecords = processAIO(data5);
                         const finalResults = [];
                         
-                        // LOOP UTAMA: DATA 5 (AIO = MASTER)
-                        aioRecords.forEach(aio => {
-                            // Cek di kamus MP apakah order ID ada terselip
-                            const matchedOrder = combinedOrders.find(order => {
-                                return aio.textClean.includes(order.orderIdClean);
-                            });
+                        // 1. Proses Data Marketplace (Data 1-4)
+                        rawCombinedOrders.forEach(order => {
+                            const orderIdClean = order.orderId.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                            const deliveryCategory = classifyDelivery(order.delivery, order.platform);
 
-                            if (matchedOrder) {
-                                matchedOrder.used = true; // Tandai bahwa MP ini ada di AIO
-                                const deliveryCategory = classifyDelivery(matchedOrder.delivery, matchedOrder.platform);
+                            // Cari AIO record yang belum dipakai (untuk menugaskan nominal utuh)
+                            let matchedAio = aioRecords.find(aio => !aio.used && aio.textClean.includes(orderIdClean));
+                            let isFirstItem = false;
+
+                            if (matchedAio) {
+                                isFirstItem = true;
+                                matchedAio.used = true; // Claim record ini
+                            } else {
+                                // Jika tidak ada yg unused, mungkin dia adalah baris pesanan ganda dari MP.
+                                // Kita cari AIO manapun yang match agar dia dapat informasi tanggalnya.
+                                matchedAio = aioRecords.find(aio => aio.textClean.includes(orderIdClean));
+                            }
+
+                            if (matchedAio) {
                                 finalResults.push({
-                                    orderId: matchedOrder.orderId,
-                                    platform: matchedOrder.platform,
-                                    store: matchedOrder.store,
-                                    delivery: matchedOrder.delivery,
+                                    orderId: order.orderId,
+                                    platform: order.platform,
+                                    store: order.store,
+                                    delivery: order.delivery,
                                     isMatch: true,
-                                    date: aio.date,
-                                    dateObj: aio.dateObj,
-                                    rawNominal: aio.rawNominal,
-                                    numericNominal: aio.numericNominal,
-                                    deliveryCategory: deliveryCategory,
-                                    isAioData: true // Ini murni dari data master AIO
+                                    date: matchedAio.date,
+                                    dateObj: matchedAio.dateObj,
+                                    rawNominal: isFirstItem ? matchedAio.rawNominal : '(Item Gabungan)',
+                                    numericNominal: isFirstItem ? matchedAio.numericNominal : 0,
+                                    deliveryCategory,
+                                    isAioData: isFirstItem, // True hanya untuk baris MP PERTAMA (Akurasi Uang AIO)
+                                    isDuplicate: !isFirstItem // True jika ini baris MP kedua, ketiga, dst
                                 });
                             } else {
-                                // Data ada di AIO tapi tidak ketemu di file MP
+                                finalResults.push({
+                                    orderId: order.orderId,
+                                    platform: order.platform,
+                                    store: order.store,
+                                    delivery: order.delivery,
+                                    isMatch: false, // Tidak ketemu sama sekali di AIO
+                                    date: '-',
+                                    dateObj: null,
+                                    rawNominal: '-',
+                                    numericNominal: 0, 
+                                    deliveryCategory,
+                                    isAioData: false,
+                                    isDuplicate: false
+                                });
+                            }
+                        });
+
+                        // 2. Ekstrak SISA AIO (Manual atau Marketplace yang kelupaan diunggah)
+                        aioRecords.forEach(aio => {
+                            if (!aio.used) {
                                 let platform = 'Tidak Diketahui';
                                 let store = 'Data 5 (AIO)';
-                                let isMatch = true; 
+                                let isMatch = true; // Supaya tampil hijau (karena secara uang dia Valid)
 
                                 if (aio.textClean.includes('SHOPEE')) {
                                     platform = 'Shopee';
@@ -747,33 +787,14 @@
                                     platform: platform,
                                     store: store,
                                     delivery: '-',
-                                    isMatch: isMatch,
+                                    isMatch: isMatch, 
                                     date: aio.date,
                                     dateObj: aio.dateObj,
                                     rawNominal: aio.rawNominal,
                                     numericNominal: aio.numericNominal,
                                     deliveryCategory: 'Manual/Lainnya',
-                                    isAioData: true 
-                                });
-                            }
-                        });
-
-                        // LOOP KEDUA: Cek Pesanan MP (Data 1-4) yang Tidak Masuk ke AIO
-                        combinedOrders.forEach(order => {
-                            if (!order.used) {
-                                const deliveryCategory = classifyDelivery(order.delivery, order.platform);
-                                finalResults.push({
-                                    orderId: order.orderId,
-                                    platform: order.platform,
-                                    store: order.store,
-                                    delivery: order.delivery,
-                                    isMatch: false,
-                                    date: '-',
-                                    dateObj: null,
-                                    rawNominal: '-',
-                                    numericNominal: 0, // Karena uangnya tidak ada di AIO
-                                    deliveryCategory: deliveryCategory,
-                                    isAioData: false
+                                    isAioData: true, // Pasti dihitung uangnya
+                                    isDuplicate: false
                                 });
                             }
                         });
@@ -818,6 +839,7 @@
 
                 const filteredData = results.filter(r => {
                     let passStatus = true;
+                    // Yang "Cocok" adalah yg Match sejati atau Duplicate, yg tidak ya !isMatch
                     if (filterStatus === 'matched') passStatus = r.isMatch;
                     if (filterStatus === 'unmatched') passStatus = !r.isMatch;
                     
@@ -826,6 +848,7 @@
 
                     let passTime = true;
                     if (filterMonth !== 'all' || startObj || endObj) {
+                        // Khusus filter waktu, jika tdk punya tgl AIO, kita sembunyikan sementara
                         if (!r.dateObj) {
                             passTime = false; 
                         } else {
@@ -848,14 +871,18 @@
             };
 
             const updateSummaryCards = (filteredData) => {
-                const matchedData = filteredData.filter(r => r.isAioData); // Acuan Murni AIO
-                const total = filteredData.length;
-                const matched = matchedData.length;
-                const unmatched = total - matched;
+                // Total Baris murni berdasarkan data tabel
+                const totalBaris = filteredData.length;
                 
-                elements.counts.total.textContent = total;
-                elements.counts.matched.textContent = matched;
-                elements.counts.unmatched.textContent = unmatched;
+                // Total transaksi Real AIO = Hanya isAioData (Mencegah item duplicate kehitung double)
+                const validAioCount = filteredData.filter(r => r.isAioData).length; 
+                
+                // Unmatched = MP yg tidak ada di AIO sama sekali
+                const unmatchedCount = filteredData.filter(r => !r.isMatch).length;
+                
+                elements.counts.total.textContent = totalBaris;
+                elements.counts.matched.textContent = validAioCount;
+                elements.counts.unmatched.textContent = unmatchedCount;
             };
 
             // --- Modal Logic ---
@@ -866,13 +893,13 @@
 
                 if (type === 'store') {
                     iconClass = 'fa-store';
-                    if (label === 'Shopee Balistationery') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'Bali Stationery');
-                    else if (label === 'Shopee Gomall') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'GoMall');
-                    else if (label === 'Shopee (Lainnya)') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'Shopee (Tdk Terdeteksi Toko)');
-                    else if (label === 'Toped Balistationery') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'Bali Stationery');
-                    else if (label === 'Toped Gomall') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'GoMall');
-                    else if (label === 'Toped (Lainnya)') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'Tokopedia (Tdk Terdeteksi Toko)');
-                    else if (label === 'Online Manual') filteredData = allData.filter(d => d.platform === 'Online Manual' || d.platform === 'Tidak Diketahui');
+                    if (label === 'Shopee Balistationery') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'Bali Stationery' && d.isAioData);
+                    else if (label === 'Shopee Gomall') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'GoMall' && d.isAioData);
+                    else if (label === 'Shopee (Lainnya)') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'Shopee (Tdk Terdeteksi Toko)' && d.isAioData);
+                    else if (label === 'Toped Balistationery') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'Bali Stationery' && d.isAioData);
+                    else if (label === 'Toped Gomall') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'GoMall' && d.isAioData);
+                    else if (label === 'Toped (Lainnya)') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'Tokopedia (Tdk Terdeteksi Toko)' && d.isAioData);
+                    else if (label === 'Online Manual') filteredData = allData.filter(d => (d.platform === 'Online Manual' || d.platform === 'Tidak Diketahui') && d.isAioData);
                 } else if (type === 'delivery') {
                     iconClass = 'fa-truck';
                     filteredData = allData.filter(d => d.deliveryCategory === label && d.isAioData); 
@@ -886,7 +913,7 @@
                         iconClass = 'fa-check-circle';
                         iconColor = 'text-green-600';
                     } else if (label === 'Data Tidak Cocok') {
-                        filteredData = allData.filter(d => !d.isAioData);
+                        filteredData = allData.filter(d => !d.isMatch);
                         iconClass = 'fa-times-circle';
                         iconColor = 'text-red-600';
                     }
@@ -926,7 +953,8 @@
 
             // --- Chart Generation ---
             const updateChart = (data) => {
-                const chartAioData = data.filter(d => d.isAioData); // HANYA DATA AIO VALID
+                // CHART HANYA MENGGUNAKAN DATA AIO VALID MURNI
+                const chartAioData = data.filter(d => d.isAioData);
 
                 const ctxStore = document.getElementById('marketplaceChart').getContext('2d');
                 const ctxDelivery = document.getElementById('deliveryChart').getContext('2d');
@@ -954,11 +982,11 @@
 
                 const sBali = aggregateStore('Shopee', 'Bali Stationery');
                 const sGo = aggregateStore('Shopee', 'GoMall');
-                const sUnk = aggregateStore('Shopee', 'Shopee (Tdk Terdeteksi Toko)'); // Tampil jika Shopee kelupaan diupload
+                const sUnk = aggregateStore('Shopee', 'Shopee (Tdk Terdeteksi Toko)');
                 
                 const tBali = aggregateStore('Tokopedia', 'Bali Stationery');
                 const tGo = aggregateStore('Tokopedia', 'GoMall');
-                const tUnk = aggregateStore('Tokopedia', 'Tokopedia (Tdk Terdeteksi Toko)'); // Tampil jika Toped kelupaan diupload
+                const tUnk = aggregateStore('Tokopedia', 'Tokopedia (Tdk Terdeteksi Toko)');
                 
                 const manual = aggregateStore('Online Manual', null);
 
@@ -966,7 +994,6 @@
                 const reguler = aggregateDelivery('Reguler');
                 const manualDeliv = aggregateDelivery('Manual/Lainnya');
 
-                // Legend Marketplace Dinamis
                 let legendHtml = '';
                 if(sBali.count > 0) legendHtml += `<div class="flex justify-between items-center bg-orange-50 p-2 rounded text-orange-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#ea580c]"></i> Shopee BaliSt</span><span class="text-right"><b>${sBali.count}</b> trx<br><span class="text-orange-600">${formatCurrency(sBali.nominal)}</span></span></div>`;
                 if(sGo.count > 0) legendHtml += `<div class="flex justify-between items-center bg-orange-50/50 p-2 rounded text-orange-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#fb923c]"></i> Shopee Gomall</span><span class="text-right"><b>${sGo.count}</b> trx<br><span class="text-orange-600">${formatCurrency(sGo.nominal)}</span></span></div>`;
@@ -1105,9 +1132,14 @@
                         platformBadge = '<span class="px-3 py-1 text-xs font-extrabold rounded-md bg-blue-500 text-white shadow-sm border border-blue-600">MANUAL</span>';
                     }
                     
-                    const statusBadge = row.isAioData
-                        ? '<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200"><i class="fas fa-check-circle"></i> Valid AIO</span>'
-                        : '<span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200"><i class="fas fa-times-circle"></i> Tidak Cocok / AIO Sisa</span>';
+                    let statusBadge = '';
+                    if (row.isAioData) {
+                        statusBadge = '<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200"><i class="fas fa-check-circle"></i> Valid AIO</span>';
+                    } else if (row.isDuplicate) {
+                        statusBadge = '<span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold border border-blue-200"><i class="fas fa-copy"></i> Item Gabungan</span>';
+                    } else {
+                        statusBadge = '<span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200"><i class="fas fa-times-circle"></i> Tdk Ada di AIO</span>';
+                    }
 
                     return `
                         <tr class="hover:bg-gray-50 transition-colors">
@@ -1297,16 +1329,23 @@
                     };
                 });
 
-                const detailRows = filteredData.map(r => ({
-                    "No Pemesanan": r.orderId,
-                    "Tgl Asli (AIO)": r.date,
-                    "Platform": r.platform,
-                    "Toko": r.store,
-                    "Layanan Pengiriman": r.delivery,
-                    "Kategori Layanan": r.deliveryCategory,
-                    "Nominal AIO": r.numericNominal || 0,
-                    "Status Data": r.isAioData ? 'Valid AIO' : 'Tidak Cocok'
-                }));
+                const detailRows = filteredData.map(r => {
+                    let ket = '';
+                    if (r.isAioData) ket = 'Utama (Valid)';
+                    else if (r.isDuplicate) ket = 'Item Gabungan';
+                    else ket = 'Tidak Cocok (Sisa)';
+
+                    return {
+                        "No Pemesanan": r.orderId,
+                        "Tgl Asli (AIO)": r.date,
+                        "Platform": r.platform,
+                        "Toko": r.store,
+                        "Layanan Pengiriman": r.delivery,
+                        "Kategori Layanan": r.deliveryCategory,
+                        "Nominal AIO": r.numericNominal || 0,
+                        "Keterangan": ket
+                    };
+                });
 
                 const wb = window.XLSX.utils.book_new();
                 const wsSummary = window.XLSX.utils.json_to_sheet(summaryRows);
@@ -1360,7 +1399,7 @@
             elements.btnExport.addEventListener('click', exportToXLSX); 
             
             elements.cards.total.addEventListener('click', () => {
-                if(state.filteredResults && state.filteredResults.length > 0) showModalDetail('Semua Pesanan', 'summary', state.filteredResults);
+                if(state.filteredResults && state.filteredResults.length > 0) showModalDetail('Total Baris Data', 'summary', state.filteredResults);
             });
             elements.cards.matched.addEventListener('click', () => {
                 if(state.filteredResults && state.filteredResults.length > 0) showModalDetail('Data Cocok & Manual', 'summary', state.filteredResults);
@@ -1372,6 +1411,3 @@
     </script>
 </body>
 </html>
-```eof
-
-Adakah format file lain yang perlu kita sesuaikan di masa mendatang?
