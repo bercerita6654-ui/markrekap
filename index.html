@@ -1399,7 +1399,7 @@
             elements.btnExport.addEventListener('click', exportToXLSX); 
             
             elements.cards.total.addEventListener('click', () => {
-                if(state.filteredResults && state.filteredResults.length > 0) showModalDetail('Total Baris Data', 'summary', state.filteredResults);
+                if(state.filteredResults && state.filteredResults.length > 0) showModalDetail('Semua Pesanan', 'summary', state.filteredResults);
             });
             elements.cards.matched.addEventListener('click', () => {
                 if(state.filteredResults && state.filteredResults.length > 0) showModalDetail('Data Cocok & Manual', 'summary', state.filteredResults);
