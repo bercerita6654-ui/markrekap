@@ -188,7 +188,7 @@
                     <div class="flex items-center gap-4 mb-2">
                         <div class="bg-blue-100 p-3 rounded-xl text-blue-600"><i class="fas fa-receipt text-xl"></i></div>
                         <div>
-                            <p class="text-gray-600 font-semibold">Total Semua Pesanan</p>
+                            <p class="text-gray-600 font-semibold">Total Semua Pesanan AIO</p>
                             <p class="text-[10px] text-blue-500 font-medium">(Klik untuk detail)</p>
                         </div>
                     </div>
@@ -199,7 +199,7 @@
                     <div class="flex items-center gap-4 mb-2">
                         <div class="bg-green-100 p-3 rounded-xl text-green-600"><i class="fas fa-check-circle text-xl"></i></div>
                         <div>
-                            <p class="text-gray-600 font-semibold">Data Cocok & Manual</p>
+                            <p class="text-gray-600 font-semibold">Data AIO Valid Terdeteksi</p>
                             <p class="text-[10px] text-green-600 font-medium">(Klik untuk detail)</p>
                         </div>
                     </div>
@@ -210,7 +210,7 @@
                     <div class="flex items-center gap-4 mb-2">
                         <div class="bg-red-100 p-3 rounded-xl text-red-600"><i class="fas fa-times-circle text-xl"></i></div>
                         <div>
-                            <p class="text-gray-600 font-semibold">Data Tidak Cocok (Belum di AIO)</p>
+                            <p class="text-gray-600 font-semibold">Pesanan Tdk Ada di AIO</p>
                             <p class="text-[10px] text-red-500 font-medium">(Klik untuk detail)</p>
                         </div>
                     </div>
@@ -221,7 +221,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Chart Card 1 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Proporsi Toko & Marketplace <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Data Cocok & Manual)</span></h3>
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Proporsi Toko & Marketplace <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Data AIO)</span></h3>
                     <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4 cursor-pointer">
                         <canvas id="marketplaceChart"></canvas>
                     </div>
@@ -231,7 +231,7 @@
 
                 <!-- Chart Card 2 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Data Cocok & Manual)</span></h3>
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Data AIO)</span></h3>
                     <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4 cursor-pointer">
                         <canvas id="deliveryChart"></canvas>
                     </div>
@@ -263,8 +263,8 @@
                                 <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Filter Status</p>
                                 <div class="flex bg-gray-200/60 p-1 rounded-xl">
                                     <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all bg-white text-gray-800 shadow-sm" data-status="all">Semua</button>
-                                    <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800" data-status="matched">Cocok</button>
-                                    <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800" data-status="unmatched">Tidak</button>
+                                    <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800" data-status="matched">Valid AIO</button>
+                                    <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800" data-status="unmatched">Tdk Valid</button>
                                 </div>
                             </div>
                         </div>
@@ -280,7 +280,7 @@
                     <!-- Bottom Filter Row (Date & Time) -->
                     <div class="w-full bg-white p-4 rounded-xl border border-gray-200 flex flex-col md:flex-row flex-wrap items-center gap-4">
                         <div class="w-full md:w-auto flex flex-col">
-                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Pilih Bulan</label>
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Pilih Bulan (AIO)</label>
                             <select id="filter-month" class="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer min-w-[150px]">
                                 <option value="all">Semua Bulan</option>
                                 <!-- Options injected via JS -->
@@ -288,12 +288,12 @@
                         </div>
                         <div class="w-full md:w-auto flex flex-col md:flex-row items-start md:items-center gap-2">
                             <div class="flex flex-col">
-                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Dari Tanggal</label>
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Dari Tanggal (AIO)</label>
                                 <input type="date" id="filter-start-date" class="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
                             </div>
                             <span class="mt-4 hidden md:inline text-gray-400 font-bold">-</span>
                             <div class="flex flex-col">
-                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Sampai Tanggal</label>
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Sampai Tanggal (AIO)</label>
                                 <input type="date" id="filter-end-date" class="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
                             </div>
                             <button id="btn-clear-date" class="mt-4 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm font-bold transition-colors shadow-sm" title="Reset Filter Waktu">
@@ -310,12 +310,12 @@
                         <thead class="sticky top-0 z-10 bg-white shadow-sm outline outline-1 outline-gray-200">
                             <tr class="text-gray-700 text-sm bg-gray-50">
                                 <th class="py-4 px-4 font-bold whitespace-nowrap border-b">No Pemesanan</th>
-                                <th class="py-4 px-4 font-bold whitespace-nowrap border-b">Tanggal (AIO)</th>
+                                <th class="py-4 px-4 font-bold whitespace-nowrap border-b">Tgl Asli (AIO)</th>
                                 <th class="py-4 px-4 font-bold whitespace-nowrap border-b">Platform</th>
                                 <th class="py-4 px-4 font-bold whitespace-nowrap border-b">Nama Toko</th>
                                 <th class="py-4 px-4 font-bold whitespace-nowrap border-b text-right">Nominal (AIO)</th>
                                 <th class="py-4 px-4 font-bold whitespace-nowrap border-b">Layanan Pengiriman</th>
-                                <th class="py-4 px-4 font-bold text-center whitespace-nowrap border-b">Status AIO</th>
+                                <th class="py-4 px-4 font-bold text-center whitespace-nowrap border-b">Status Data</th>
                             </tr>
                         </thead>
                         <tbody id="table-body" class="divide-y divide-gray-100">
@@ -347,7 +347,7 @@
                     <thead class="sticky top-0 bg-white shadow-sm outline outline-1 outline-gray-200">
                         <tr class="text-gray-700 text-sm bg-gray-100">
                             <th class="py-3 px-6 font-bold border-b whitespace-nowrap">No Pemesanan</th>
-                            <th class="py-3 px-6 font-bold border-b whitespace-nowrap">Tanggal (AIO)</th>
+                            <th class="py-3 px-6 font-bold border-b whitespace-nowrap">Tgl Asli (AIO)</th>
                             <th class="py-3 px-6 font-bold border-b whitespace-nowrap text-right">Nominal (AIO)</th>
                         </tr>
                     </thead>
@@ -469,50 +469,29 @@
                 return isNegative ? -num : num;
             };
 
-            const formatExcelDate = (val) => {
-                if (!val) return '-';
-                if (typeof val === 'string') {
-                    const s = val.trim();
-                    const m = s.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-                    if (m) {
-                        const d = m[1].padStart(2, '0');
-                        const mo = m[2].padStart(2, '0');
-                        let y = m[3];
-                        if (y.length === 2) y = '20' + y;
-                        return `${d}/${mo}/${y}`;
-                    }
-                    return s;
-                }
-                if (typeof val === 'number') {
-                    const excelDays = val - 25569; 
-                    const date = new Date(excelDays * 86400 * 1000);
-                    const d = String(date.getUTCDate()).padStart(2, '0');
-                    const m = String(date.getUTCMonth() + 1).padStart(2, '0');
-                    const y = date.getUTCFullYear();
-                    return `${d}/${m}/${y}`;
-                }
-                return String(val).trim();
-            };
-
-            const parseDateStr = (dateStr) => {
+            const parseExcelDateToJS = (dateStr) => {
                 if (!dateStr || dateStr === '-') return null;
                 let s = String(dateStr).trim();
                 
+                // Pisahkan tanggal, buang jam di belakangnya (jika ada spasi)
+                s = s.split(' ')[0];
+
+                // Cek format DD/MM/YYYY atau DD-MM-YYYY
                 let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
                 if (m) {
-                    let d = parseInt(m[1], 10);
-                    let mo = parseInt(m[2], 10) - 1; 
-                    let y = parseInt(m[3], 10);
-                    if (y < 100) y += 2000;
-                    return new Date(y, mo, d);
-                }
-                
-                m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
-                if (m) {
-                    let y = parseInt(m[1], 10);
-                    let mo = parseInt(m[2], 10) - 1; 
-                    let d = parseInt(m[3], 10);
-                    return new Date(y, mo, d);
+                    // Pastikan kalau YYYY di depan, parse dengan benar
+                    if (m[1].length === 4) {
+                        let y = parseInt(m[1], 10);
+                        let mo = parseInt(m[2], 10) - 1; 
+                        let d = parseInt(m[3], 10);
+                        return new Date(y, mo, d);
+                    } else {
+                        let d = parseInt(m[1], 10);
+                        let mo = parseInt(m[2], 10) - 1; 
+                        let y = parseInt(m[3], 10);
+                        if (y < 100) y += 2000;
+                        return new Date(y, mo, d);
+                    }
                 }
                 
                 const fallback = new Date(s);
@@ -598,7 +577,7 @@
                     const row = data[i];
                     if (!row || row.length === 0) continue;
                     const orderId = String(row[0] || '').trim();
-                    if (!orderId) continue;
+                    if (!orderId || orderId.length < 8) continue; // PENGAMAN ANTI-KOSONG
                     const delivery = String(row[5] || '').trim();
                     results.push({ orderId, platform: 'Shopee', store: storeName, delivery });
                 }
@@ -611,7 +590,7 @@
                     const row = data[i];
                     if (!row || row.length === 0) continue;
                     const orderId = String(row[0] || '').trim();
-                    if (!orderId) continue;
+                    if (!orderId || orderId.length < 8) continue; // PENGAMAN ANTI-KOSONG
                     const delivery = String(row[40] || '').trim();
                     results.push({ orderId, platform: 'Tokopedia', store: storeName, delivery });
                 }
@@ -624,15 +603,16 @@
                     const row = data[i];
                     if (!row || row.length === 0) continue;
                     
-                    const rawDate = row[1]; 
-                    const dateInfo = formatExcelDate(rawDate); 
+                    const dateInfo = String(row[1] || '').trim(); // Biarkan utuh format aslinya
+                    const dateObj = parseExcelDateToJS(dateInfo); // Parse untuk filter
+                    
                     const text = String(row[2] || '').trim(); 
                     const rawNominal = row[4]; 
                     const numericNominal = parseNominal(rawNominal); 
                     
                     if (text && numericNominal !== 0) {
                         const textClean = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                        results.push({ text, textClean, date: dateInfo, rawNominal, numericNominal, used: false });
+                        results.push({ text, textClean, date: dateInfo, dateObj, rawNominal, numericNominal, used: false });
                     }
                 }
                 return results;
@@ -653,9 +633,8 @@
             const populateMonthDropdown = (data) => {
                 const monthsSet = new Set();
                 data.forEach(r => {
-                    const d = parseDateStr(r.date);
-                    if(d) {
-                        monthsSet.add(getMonthYearStr(d));
+                    if(r.dateObj) {
+                        monthsSet.add(getMonthYearStr(r.dateObj));
                     }
                 });
 
@@ -676,7 +655,7 @@
                 });
             };
 
-            // --- Core Analysis ---
+            // --- Core Analysis (DATA 5 MASTER APPROACH) ---
             const analyzeData = async () => {
                 if (typeof window.XLSX === 'undefined') {
                     showError("Sistem sedang memuat pustaka Excel. Harap tunggu sebentar lalu coba lagi.");
@@ -709,14 +688,12 @@
                         if (data3.length) rawCombinedOrders = rawCombinedOrders.concat(processTokopedia(data3, 'Bali Stationery'));
                         if (data4.length) rawCombinedOrders = rawCombinedOrders.concat(processTokopedia(data4, 'GoMall'));
 
-                        // 1. DEDUPLIKASI KAMUS MARKETPLACE
-                        // Jika ada nomor pesanan berulang (misal karena order banyak item), ambil satu saja untuk kamus pengiriman
+                        // KAMUS REFERENSI (Hapus ID Duplikat di MP agar tidak membingungkan sistem)
                         const uniqueOrdersMap = new Map();
                         rawCombinedOrders.forEach(order => {
                             const orderIdClean = order.orderId.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                            if (!uniqueOrdersMap.has(orderIdClean)) {
+                            if (orderIdClean.length >= 8 && !uniqueOrdersMap.has(orderIdClean)) {
                                 order.orderIdClean = orderIdClean; 
-                                order.used = false; // Flag tambahan untuk Loop 2
                                 uniqueOrdersMap.set(orderIdClean, order);
                             }
                         });
@@ -725,52 +702,44 @@
                         const aioRecords = processAIO(data5);
                         const finalResults = [];
                         
-                        // 2. LOOP UTAMA DIMULAI DARI DATA 5 (AIO = MASTER)
+                        // LOOP UTAMA: DATA 5 (AIO = MASTER)
                         aioRecords.forEach(aio => {
-                            let matchedOrder = null;
-                            
-                            // Cari ID Marketplace di dalam teks AIO (tanpa batasan / bebas berulang kali)
-                            for (let i = 0; i < combinedOrders.length; i++) {
-                                if (aio.textClean.includes(combinedOrders[i].orderIdClean)) {
-                                    matchedOrder = combinedOrders[i];
-                                    matchedOrder.used = true; // Tandai bahwa MP ini nyata dan sudah dipakai minimal 1x
-                                    break;
-                                }
-                            }
+                            // Cek di kamus MP apakah order ID ada terselip
+                            const matchedOrder = combinedOrders.find(order => {
+                                return aio.textClean.includes(order.orderIdClean);
+                            });
 
                             if (matchedOrder) {
-                                // JIKA KETEMU DI MARKETPLACE (COCOK)
+                                matchedOrder.used = true; // Tandai bahwa MP ini ada di AIO
                                 const deliveryCategory = classifyDelivery(matchedOrder.delivery, matchedOrder.platform);
                                 finalResults.push({
-                                    orderId: matchedOrder.orderId, // Memakai ID bersih dari MP
+                                    orderId: matchedOrder.orderId,
                                     platform: matchedOrder.platform,
                                     store: matchedOrder.store,
                                     delivery: matchedOrder.delivery,
                                     isMatch: true,
                                     date: aio.date,
+                                    dateObj: aio.dateObj,
                                     rawNominal: aio.rawNominal,
                                     numericNominal: aio.numericNominal,
                                     deliveryCategory: deliveryCategory,
-                                    isAioData: true // Murni dari Data 5
+                                    isAioData: true // Ini murni dari data master AIO
                                 });
                             } else {
-                                // JIKA ADA DI AIO TAPI TIDAK ADA DI FILE MARKETPLACE 1-4
+                                // Data ada di AIO tapi tidak ketemu di file MP
                                 let platform = 'Tidak Diketahui';
                                 let store = 'Data 5 (AIO)';
-                                let isMatch = false; // Merah, tidak cocok (karena tak ada di MP)
+                                let isMatch = true; 
 
                                 if (aio.textClean.includes('SHOPEE')) {
                                     platform = 'Shopee';
-                                    store = 'AIO (Tdk ada di File 1/2)';
+                                    store = 'Shopee (Tdk Terdeteksi Toko)';
                                 } else if (aio.textClean.includes('TOKOPEDIA') || aio.textClean.includes('TOKOPED') || aio.textClean.includes('TIKTOK')) {
                                     platform = 'Tokopedia';
-                                    store = 'AIO (Tdk ada di File 3/4)';
-                                }
-
-                                if (aio.textClean.includes('ONLINEMANUAL') || aio.textClean.includes('MANUAL')) {
+                                    store = 'Tokopedia (Tdk Terdeteksi Toko)';
+                                } else if (aio.textClean.includes('ONLINEMANUAL') || aio.textClean.includes('MANUAL')) {
                                     platform = 'Online Manual';
                                     store = 'Data 5 (AIO)';
-                                    isMatch = true; // Hijau, sah sebagai Manual/Cocok
                                 }
 
                                 finalResults.push({
@@ -780,16 +749,16 @@
                                     delivery: '-',
                                     isMatch: isMatch,
                                     date: aio.date,
+                                    dateObj: aio.dateObj,
                                     rawNominal: aio.rawNominal,
                                     numericNominal: aio.numericNominal,
                                     deliveryCategory: 'Manual/Lainnya',
-                                    isAioData: true // Tetap hitung sebagai Data 5 yang valid
+                                    isAioData: true 
                                 });
                             }
                         });
 
-                        // 3. LOOP KEDUA: Cek Pesanan MP (Data 1-4) yang Tidak Masuk ke AIO
-                        // Mendata orderan yang belum dibayar / belum masuk AIO
+                        // LOOP KEDUA: Cek Pesanan MP (Data 1-4) yang Tidak Masuk ke AIO
                         combinedOrders.forEach(order => {
                             if (!order.used) {
                                 const deliveryCategory = classifyDelivery(order.delivery, order.platform);
@@ -798,12 +767,13 @@
                                     platform: order.platform,
                                     store: order.store,
                                     delivery: order.delivery,
-                                    isMatch: false, // Tentu tidak cocok
+                                    isMatch: false,
                                     date: '-',
+                                    dateObj: null,
                                     rawNominal: '-',
-                                    numericNominal: 0, // 0 karena uang belum masuk ke AIO
+                                    numericNominal: 0, // Karena uangnya tidak ada di AIO
                                     deliveryCategory: deliveryCategory,
-                                    isAioData: false // Bukan Data 5
+                                    isAioData: false
                                 });
                             }
                         });
@@ -856,15 +826,14 @@
 
                     let passTime = true;
                     if (filterMonth !== 'all' || startObj || endObj) {
-                        const d = parseDateStr(r.date);
-                        if (!d) {
+                        if (!r.dateObj) {
                             passTime = false; 
                         } else {
                             if (filterMonth !== 'all') {
-                                if (getMonthYearStr(d) !== filterMonth) passTime = false;
+                                if (getMonthYearStr(r.dateObj) !== filterMonth) passTime = false;
                             }
-                            if (startObj && d < startObj) passTime = false;
-                            if (endObj && d > endObj) passTime = false;
+                            if (startObj && r.dateObj < startObj) passTime = false;
+                            if (endObj && r.dateObj > endObj) passTime = false;
                         }
                     }
 
@@ -879,8 +848,9 @@
             };
 
             const updateSummaryCards = (filteredData) => {
+                const matchedData = filteredData.filter(r => r.isAioData); // Acuan Murni AIO
                 const total = filteredData.length;
-                const matched = filteredData.filter(r => r.isMatch).length;
+                const matched = matchedData.length;
                 const unmatched = total - matched;
                 
                 elements.counts.total.textContent = total;
@@ -898,9 +868,11 @@
                     iconClass = 'fa-store';
                     if (label === 'Shopee Balistationery') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'Bali Stationery');
                     else if (label === 'Shopee Gomall') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'GoMall');
+                    else if (label === 'Shopee (Lainnya)') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'Shopee (Tdk Terdeteksi Toko)');
                     else if (label === 'Toped Balistationery') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'Bali Stationery');
                     else if (label === 'Toped Gomall') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'GoMall');
-                    else if (label === 'Online Manual') filteredData = allData.filter(d => d.platform === 'Online Manual');
+                    else if (label === 'Toped (Lainnya)') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'Tokopedia (Tdk Terdeteksi Toko)');
+                    else if (label === 'Online Manual') filteredData = allData.filter(d => d.platform === 'Online Manual' || d.platform === 'Tidak Diketahui');
                 } else if (type === 'delivery') {
                     iconClass = 'fa-truck';
                     filteredData = allData.filter(d => d.deliveryCategory === label && d.isAioData); 
@@ -910,11 +882,11 @@
                         iconClass = 'fa-receipt';
                         iconColor = 'text-blue-600';
                     } else if (label === 'Data Cocok & Manual') {
-                        filteredData = allData.filter(d => d.isMatch);
+                        filteredData = allData.filter(d => d.isAioData);
                         iconClass = 'fa-check-circle';
                         iconColor = 'text-green-600';
                     } else if (label === 'Data Tidak Cocok') {
-                        filteredData = allData.filter(d => !d.isMatch);
+                        filteredData = allData.filter(d => !d.isAioData);
                         iconClass = 'fa-times-circle';
                         iconColor = 'text-red-600';
                     }
@@ -954,14 +926,18 @@
 
             // --- Chart Generation ---
             const updateChart = (data) => {
-                // Di grafik pastikan hanya menghitung data yang valid di AIO agar total harian match
-                const chartAioData = data.filter(d => d.isAioData);
+                const chartAioData = data.filter(d => d.isAioData); // HANYA DATA AIO VALID
 
                 const ctxStore = document.getElementById('marketplaceChart').getContext('2d');
                 const ctxDelivery = document.getElementById('deliveryChart').getContext('2d');
                 
                 const aggregateStore = (platform, store) => {
-                    const filtered = chartAioData.filter(d => platform === 'Online Manual' ? d.platform === 'Online Manual' : (d.platform === platform && d.store === store));
+                    let filtered;
+                    if (platform === 'Online Manual') {
+                        filtered = chartAioData.filter(d => d.platform === 'Online Manual' || d.platform === 'Tidak Diketahui');
+                    } else {
+                        filtered = chartAioData.filter(d => d.platform === platform && d.store === store);
+                    }
                     return {
                         count: filtered.length,
                         nominal: filtered.reduce((sum, d) => sum + (d.numericNominal || 0), 0)
@@ -978,36 +954,31 @@
 
                 const sBali = aggregateStore('Shopee', 'Bali Stationery');
                 const sGo = aggregateStore('Shopee', 'GoMall');
+                const sUnk = aggregateStore('Shopee', 'Shopee (Tdk Terdeteksi Toko)'); // Tampil jika Shopee kelupaan diupload
+                
                 const tBali = aggregateStore('Tokopedia', 'Bali Stationery');
                 const tGo = aggregateStore('Tokopedia', 'GoMall');
+                const tUnk = aggregateStore('Tokopedia', 'Tokopedia (Tdk Terdeteksi Toko)'); // Tampil jika Toped kelupaan diupload
+                
                 const manual = aggregateStore('Online Manual', null);
 
                 const instan = aggregateDelivery('Instan');
                 const reguler = aggregateDelivery('Reguler');
                 const manualDeliv = aggregateDelivery('Manual/Lainnya');
 
-                document.getElementById('legend-marketplace').innerHTML = `
-                    <div class="flex justify-between items-center bg-orange-50 p-2 rounded text-orange-800">
-                        <span><i class="fas fa-circle text-[8px] mr-1 text-[#ea580c]"></i> Shopee Balistationery</span> 
-                        <span class="text-right"><b>${sBali.count}</b> trx<br><span class="text-orange-600">${formatCurrency(sBali.nominal)}</span></span>
-                    </div>
-                    <div class="flex justify-between items-center bg-orange-50/50 p-2 rounded text-orange-800">
-                        <span><i class="fas fa-circle text-[8px] mr-1 text-[#fb923c]"></i> Shopee Gomall</span> 
-                        <span class="text-right"><b>${sGo.count}</b> trx<br><span class="text-orange-600">${formatCurrency(sGo.nominal)}</span></span>
-                    </div>
-                    <div class="flex justify-between items-center bg-green-50 p-2 rounded text-green-800">
-                        <span><i class="fas fa-circle text-[8px] mr-1 text-[#16a34a]"></i> Toped Balistationery</span> 
-                        <span class="text-right"><b>${tBali.count}</b> trx<br><span class="text-green-600">${formatCurrency(tBali.nominal)}</span></span>
-                    </div>
-                    <div class="flex justify-between items-center bg-green-50/50 p-2 rounded text-green-800">
-                        <span><i class="fas fa-circle text-[8px] mr-1 text-[#4ade80]"></i> Toped Gomall</span> 
-                        <span class="text-right"><b>${tGo.count}</b> trx<br><span class="text-green-600">${formatCurrency(tGo.nominal)}</span></span>
-                    </div>
-                    <div class="flex justify-between items-center bg-blue-50 p-2 rounded text-blue-800">
-                        <span><i class="fas fa-circle text-[8px] mr-1 text-[#3b82f6]"></i> Online Manual</span> 
-                        <span class="text-right"><b>${manual.count}</b> trx<br><span class="text-blue-600">${formatCurrency(manual.nominal)}</span></span>
-                    </div>
-                `;
+                // Legend Marketplace Dinamis
+                let legendHtml = '';
+                if(sBali.count > 0) legendHtml += `<div class="flex justify-between items-center bg-orange-50 p-2 rounded text-orange-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#ea580c]"></i> Shopee BaliSt</span><span class="text-right"><b>${sBali.count}</b> trx<br><span class="text-orange-600">${formatCurrency(sBali.nominal)}</span></span></div>`;
+                if(sGo.count > 0) legendHtml += `<div class="flex justify-between items-center bg-orange-50/50 p-2 rounded text-orange-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#fb923c]"></i> Shopee Gomall</span><span class="text-right"><b>${sGo.count}</b> trx<br><span class="text-orange-600">${formatCurrency(sGo.nominal)}</span></span></div>`;
+                if(sUnk.count > 0) legendHtml += `<div class="flex justify-between items-center bg-orange-100 p-2 rounded text-orange-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#fdba74]"></i> Shopee (Lainnya)</span><span class="text-right"><b>${sUnk.count}</b> trx<br><span class="text-orange-600">${formatCurrency(sUnk.nominal)}</span></span></div>`;
+                
+                if(tBali.count > 0) legendHtml += `<div class="flex justify-between items-center bg-green-50 p-2 rounded text-green-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#16a34a]"></i> Toped BaliSt</span><span class="text-right"><b>${tBali.count}</b> trx<br><span class="text-green-600">${formatCurrency(tBali.nominal)}</span></span></div>`;
+                if(tGo.count > 0) legendHtml += `<div class="flex justify-between items-center bg-green-50/50 p-2 rounded text-green-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#4ade80]"></i> Toped Gomall</span><span class="text-right"><b>${tGo.count}</b> trx<br><span class="text-green-600">${formatCurrency(tGo.nominal)}</span></span></div>`;
+                if(tUnk.count > 0) legendHtml += `<div class="flex justify-between items-center bg-green-100 p-2 rounded text-green-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#86efac]"></i> Toped (Lainnya)</span><span class="text-right"><b>${tUnk.count}</b> trx<br><span class="text-green-600">${formatCurrency(tUnk.nominal)}</span></span></div>`;
+                
+                if(manual.count > 0) legendHtml += `<div class="flex justify-between items-center bg-blue-50 p-2 rounded text-blue-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#3b82f6]"></i> Online Manual</span><span class="text-right"><b>${manual.count}</b> trx<br><span class="text-blue-600">${formatCurrency(manual.nominal)}</span></span></div>`;
+                
+                document.getElementById('legend-marketplace').innerHTML = legendHtml;
 
                 document.getElementById('legend-delivery').innerHTML = `
                     <div class="flex justify-between items-center bg-red-50 p-2 rounded text-red-800">
@@ -1042,11 +1013,11 @@
                 chartInstanceStore = new Chart(ctxStore, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Shopee Balistationery', 'Shopee Gomall', 'Toped Balistationery', 'Toped Gomall', 'Online Manual'],
+                        labels: ['Shopee Balistationery', 'Shopee Gomall', 'Shopee (Lainnya)', 'Toped Balistationery', 'Toped Gomall', 'Toped (Lainnya)', 'Online Manual'],
                         datasets: [{
-                            data: [sBali.count, sGo.count, tBali.count, tGo.count, manual.count],
-                            nominals: [sBali.nominal, sGo.nominal, tBali.nominal, tGo.nominal, manual.nominal],
-                            backgroundColor: ['#ea580c', '#fb923c', '#16a34a', '#4ade80', '#3b82f6'],
+                            data: [sBali.count, sGo.count, sUnk.count, tBali.count, tGo.count, tUnk.count, manual.count],
+                            nominals: [sBali.nominal, sGo.nominal, sUnk.nominal, tBali.nominal, tGo.nominal, tUnk.nominal, manual.nominal],
+                            backgroundColor: ['#ea580c', '#fb923c', '#fdba74', '#16a34a', '#4ade80', '#86efac', '#3b82f6'],
                             borderWidth: 2,
                             borderColor: '#ffffff',
                             hoverOffset: 4
@@ -1134,9 +1105,9 @@
                         platformBadge = '<span class="px-3 py-1 text-xs font-extrabold rounded-md bg-blue-500 text-white shadow-sm border border-blue-600">MANUAL</span>';
                     }
                     
-                    const statusBadge = row.isMatch
-                        ? '<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200"><i class="fas fa-check-circle"></i> Cocok / Valid</span>'
-                        : '<span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200"><i class="fas fa-times-circle"></i> Tidak Cocok</span>';
+                    const statusBadge = row.isAioData
+                        ? '<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200"><i class="fas fa-check-circle"></i> Valid AIO</span>'
+                        : '<span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200"><i class="fas fa-times-circle"></i> Tidak Cocok / AIO Sisa</span>';
 
                     return `
                         <tr class="hover:bg-gray-50 transition-colors">
@@ -1231,7 +1202,7 @@
                 }
 
                 if (!minTime || !maxTime) {
-                    const allValidDates = matchedDataForSummary.map(r => parseDateStr(r.date)).filter(d => d).map(d => d.getTime());
+                    const allValidDates = matchedDataForSummary.map(r => r.dateObj).filter(d => d).map(d => d.getTime());
                     if (allValidDates.length > 0) {
                         if (!minTime) minTime = Math.min(...allValidDates);
                         if (!maxTime) maxTime = Math.max(...allValidDates);
@@ -1269,7 +1240,7 @@
                 }
 
                 matchedDataForSummary.forEach(r => {
-                    const d = parseDateStr(r.date);
+                    const d = r.dateObj;
                     let target = null;
                     
                     if (d) {
@@ -1328,13 +1299,13 @@
 
                 const detailRows = filteredData.map(r => ({
                     "No Pemesanan": r.orderId,
-                    "Tanggal AIO": r.date,
+                    "Tgl Asli (AIO)": r.date,
                     "Platform": r.platform,
                     "Toko": r.store,
                     "Layanan Pengiriman": r.delivery,
                     "Kategori Layanan": r.deliveryCategory,
                     "Nominal AIO": r.numericNominal || 0,
-                    "Status": r.isMatch ? 'Cocok / Valid' : 'Tidak Cocok'
+                    "Status Data": r.isAioData ? 'Valid AIO' : 'Tidak Cocok'
                 }));
 
                 const wb = window.XLSX.utils.book_new();
@@ -1401,3 +1372,6 @@
     </script>
 </body>
 </html>
+```eof
+
+Adakah format file lain yang perlu kita sesuaikan di masa mendatang?
