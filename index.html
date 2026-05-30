@@ -159,7 +159,7 @@
                 <div class="bg-blue-50/50 p-6 rounded-2xl border-2 border-blue-200 flex flex-col items-center justify-center text-center relative shadow-inner">
                     <div class="bg-blue-100 p-3 rounded-full mb-3 text-blue-600"><i class="fas fa-database text-2xl"></i></div>
                     <h3 class="font-bold text-xl text-blue-900 mb-1">Data 5: Penjualan (Master AIO)</h3>
-                    <p class="text-sm text-blue-700 mb-5">Upload file AIO yang berisi mutasi/penjualan untuk pencocokan. Data "ONLINE MANUAL" akan otomatis diekstrak.</p>
+                    <p class="text-sm text-blue-700 mb-5">Upload file AIO yang berisi mutasi/penjualan. Data ini adalah ACUAN UTAMA perhitungan uang dan Qty.</p>
                     <label class="cursor-pointer flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold transition-colors shadow-md w-full max-w-sm">
                         <i class="fas fa-upload"></i>
                         <span id="label-aio" class="truncate max-w-[200px]">Pilih File Data AIO .xlsx</span>
@@ -186,10 +186,10 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div id="card-total" class="cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl shadow-sm border border-blue-100 flex flex-col justify-center">
                     <div class="flex items-center gap-4 mb-2">
-                        <div class="bg-blue-100 p-3 rounded-xl text-blue-600"><i class="fas fa-list text-xl"></i></div>
+                        <div class="bg-blue-100 p-3 rounded-xl text-blue-600"><i class="fas fa-receipt text-xl"></i></div>
                         <div>
-                            <p class="text-gray-600 font-semibold">Total Baris Data (Tabel)</p>
-                            <p class="text-[10px] text-blue-500 font-medium">(Termasuk Item Gabungan)</p>
+                            <p class="text-gray-600 font-semibold">Total Seluruh Baris (Tabel)</p>
+                            <p class="text-[10px] text-blue-500 font-medium">(Klik untuk detail)</p>
                         </div>
                     </div>
                     <h3 id="count-total" class="text-4xl font-bold text-blue-900 ml-16">0</h3>
@@ -199,8 +199,8 @@
                     <div class="flex items-center gap-4 mb-2">
                         <div class="bg-green-100 p-3 rounded-xl text-green-600"><i class="fas fa-check-circle text-xl"></i></div>
                         <div>
-                            <p class="text-gray-600 font-semibold">Total Transaksi AIO (Cocok)</p>
-                            <p class="text-[10px] text-green-600 font-medium">(Klik untuk detail riil AIO)</p>
+                            <p class="text-gray-600 font-semibold">Total Data AIO (Uang Masuk)</p>
+                            <p class="text-[10px] text-green-600 font-medium">(Klik untuk detail)</p>
                         </div>
                     </div>
                     <h3 id="count-matched" class="text-4xl font-bold text-green-700 ml-16">0</h3>
@@ -210,8 +210,8 @@
                     <div class="flex items-center gap-4 mb-2">
                         <div class="bg-red-100 p-3 rounded-xl text-red-600"><i class="fas fa-times-circle text-xl"></i></div>
                         <div>
-                            <p class="text-gray-600 font-semibold">Pesanan Belum Masuk AIO</p>
-                            <p class="text-[10px] text-red-500 font-medium">(Tidak Ditemukan di Data 5)</p>
+                            <p class="text-gray-600 font-semibold">MP Belum Ada di AIO</p>
+                            <p class="text-[10px] text-red-500 font-medium">(Klik untuk detail)</p>
                         </div>
                     </div>
                     <h3 id="count-unmatched" class="text-4xl font-bold text-red-700 ml-16">0</h3>
@@ -221,7 +221,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Chart Card 1 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Proporsi Toko & Marketplace <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Acuan AIO)</span></h3>
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Proporsi Toko & Marketplace <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Data AIO)</span></h3>
                     <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4 cursor-pointer">
                         <canvas id="marketplaceChart"></canvas>
                     </div>
@@ -231,7 +231,7 @@
 
                 <!-- Chart Card 2 -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Acuan AIO)</span></h3>
+                    <h3 class="font-bold text-gray-800 mb-4 w-full text-left border-b pb-2">Layanan Pengiriman <span class="text-xs font-normal text-gray-400 ml-2">(Hanya Data AIO)</span></h3>
                     <div class="relative w-full aspect-square max-w-[280px] mx-auto mb-4 cursor-pointer">
                         <canvas id="deliveryChart"></canvas>
                     </div>
@@ -264,7 +264,7 @@
                                 <div class="flex bg-gray-200/60 p-1 rounded-xl">
                                     <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all bg-white text-gray-800 shadow-sm" data-status="all">Semua</button>
                                     <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800" data-status="matched">Valid AIO</button>
-                                    <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800" data-status="unmatched">Tdk Valid</button>
+                                    <button class="status-btn px-4 py-1.5 rounded-lg text-sm font-bold transition-all text-gray-500 hover:text-gray-800" data-status="unmatched">Belum Ada di AIO</button>
                                 </div>
                             </div>
                         </div>
@@ -448,21 +448,23 @@
                 return val;
             };
 
+            // PARSER NUMBER PALING ROBUST (Tahan koma, tahan titik desimal, tahan string Rp)
             const parseNominal = (val) => {
-                if (typeof val === 'number') return val;
+                if (typeof val === 'number') return Math.round(val);
                 if (!val || val === '-') return 0;
                 
                 let str = String(val).trim();
                 let isNegative = str.includes('-') || (str.includes('(') && str.includes(')'));
                 
-                str = str.replace(/[^\d.,]/g, '');
-                if (!str) return 0;
+                // Menghilangkan "Rp" dan spasi
+                str = str.replace(/Rp/ig, '').replace(/\s/g, '');
                 
-                if (/(,|\.)\d{1,2}$/.test(str)) {
-                    str = str.replace(/(,|\.)\d{1,2}$/, '');
-                }
+                // Jika berakhiran ,00 atau .00 (atau .50 dll sebanyak 2 digit), hapus ekornya
+                str = str.replace(/[,.]\d{1,2}$/, '');
                 
-                str = str.replace(/[,.]/g, ''); 
+                // Hapus semua karakter yang BUKAN angka murni
+                str = str.replace(/\D/g, ''); 
+                
                 let num = parseInt(str, 10);
                 if (isNaN(num)) return 0;
                 
@@ -581,6 +583,7 @@
                             const data = new Uint8Array(e.target.result);
                             const workbook = window.XLSX.read(data, { type: 'array' });
                             const firstSheet = workbook.SheetNames[0];
+                            // FORCE RAW: FALSE agar no order tokopedia tidak terpotong (presisi 18 digit)
                             const sheetData = window.XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1, raw: false, defval: "" });
                             resolve(sheetData);
                         } catch (err) {
@@ -630,11 +633,11 @@
                     const rawNominal = row[4]; 
                     const numericNominal = parseNominal(rawNominal); 
                     
+                    // Semua baris Data 5 yang ada isinya kita rekap sebagai master utama
                     if (text && numericNominal !== 0) {
                         const textClean = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                        // Buat object date agar bisa difilter
                         const dateObj = parseDateStr(dateInfo);
-                        results.push({ text, textClean, date: dateInfo, dateObj, rawNominal, numericNominal, used: false });
+                        results.push({ text, textClean, date: dateInfo, dateObj, rawNominal, numericNominal });
                     }
                 }
                 return results;
@@ -677,7 +680,7 @@
                 });
             };
 
-            // --- Core Analysis (FULL DATA APPROACH) ---
+            // --- Core Analysis (AIO AS MASTER ROOT) ---
             const analyzeData = async () => {
                 if (typeof window.XLSX === 'undefined') {
                     showError("Sistem sedang memuat pustaka Excel. Harap tunggu sebentar lalu coba lagi.");
@@ -710,76 +713,59 @@
                         if (data3.length) rawCombinedOrders = rawCombinedOrders.concat(processTokopedia(data3, 'Bali Stationery'));
                         if (data4.length) rawCombinedOrders = rawCombinedOrders.concat(processTokopedia(data4, 'GoMall'));
 
-                        const aioRecords = processAIO(data5);
-                        const finalResults = [];
-                        
-                        // 1. Proses Data Marketplace (Data 1-4)
+                        // LANGKAH 1: Buat KAMUS PENGIRIMAN dari Data 1-4 (Dibuang Duplikatnya)
+                        const mpKamus = [];
                         rawCombinedOrders.forEach(order => {
                             const orderIdClean = order.orderId.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                            const deliveryCategory = classifyDelivery(order.delivery, order.platform);
-
-                            // Cari AIO record yang belum dipakai (untuk menugaskan nominal utuh)
-                            let matchedAio = aioRecords.find(aio => !aio.used && aio.textClean.includes(orderIdClean));
-                            let isFirstItem = false;
-
-                            if (matchedAio) {
-                                isFirstItem = true;
-                                matchedAio.used = true; // Claim record ini
-                            } else {
-                                // Jika tidak ada yg unused, mungkin dia adalah baris pesanan ganda dari MP.
-                                // Kita cari AIO manapun yang match agar dia dapat informasi tanggalnya.
-                                matchedAio = aioRecords.find(aio => aio.textClean.includes(orderIdClean));
-                            }
-
-                            if (matchedAio) {
-                                finalResults.push({
-                                    orderId: order.orderId,
-                                    platform: order.platform,
-                                    store: order.store,
-                                    delivery: order.delivery,
-                                    isMatch: true,
-                                    date: matchedAio.date,
-                                    dateObj: matchedAio.dateObj,
-                                    rawNominal: isFirstItem ? matchedAio.rawNominal : '(Item Gabungan)',
-                                    numericNominal: isFirstItem ? matchedAio.numericNominal : 0,
-                                    deliveryCategory,
-                                    isAioData: isFirstItem, // True hanya untuk baris MP PERTAMA (Akurasi Uang AIO)
-                                    isDuplicate: !isFirstItem // True jika ini baris MP kedua, ketiga, dst
-                                });
-                            } else {
-                                finalResults.push({
-                                    orderId: order.orderId,
-                                    platform: order.platform,
-                                    store: order.store,
-                                    delivery: order.delivery,
-                                    isMatch: false, // Tidak ketemu sama sekali di AIO
-                                    date: '-',
-                                    dateObj: null,
-                                    rawNominal: '-',
-                                    numericNominal: 0, 
-                                    deliveryCategory,
-                                    isAioData: false,
-                                    isDuplicate: false
-                                });
+                            if (orderIdClean.length >= 8) {
+                                mpKamus.push({ ...order, orderIdClean });
                             }
                         });
+                        // Urutkan dari yang terpanjang agar pencarian Teks AIO lebih akurat
+                        mpKamus.sort((a, b) => b.orderIdClean.length - a.orderIdClean.length);
 
-                        // 2. Ekstrak SISA AIO (Manual atau Marketplace yang kelupaan diunggah)
+                        const aioRecords = processAIO(data5);
+                        const finalResults = [];
+                        const kamusYgTerpakai = new Set();
+                        
+                        // LANGKAH 2: LOOP MASTER DARI DATA 5 (AIO) - Jumlah Transaksi MURNI AIO!
                         aioRecords.forEach(aio => {
-                            if (!aio.used) {
+                            const aioTextClean = aio.textClean;
+                            
+                            // Cari di Kamus MP
+                            const matchedMp = mpKamus.find(mp => aioTextClean.includes(mp.orderIdClean));
+
+                            if (matchedMp) {
+                                kamusYgTerpakai.add(matchedMp.orderIdClean);
+                                finalResults.push({
+                                    orderId: matchedMp.orderId, // Ambil no pesanan bersih dari MP
+                                    platform: matchedMp.platform,
+                                    store: matchedMp.store,
+                                    delivery: matchedMp.delivery,
+                                    deliveryCategory: classifyDelivery(matchedMp.delivery, matchedMp.platform),
+                                    isMatch: true, 
+                                    date: aio.date,
+                                    dateObj: aio.dateObj,
+                                    rawNominal: aio.rawNominal,
+                                    numericNominal: aio.numericNominal,
+                                    isAioData: true // Status: VALID AIO
+                                });
+                            } else {
+                                // AIO tidak menemukan informasi pesanan di kamus (Manual / Lupa diupload)
                                 let platform = 'Tidak Diketahui';
                                 let store = 'Data 5 (AIO)';
-                                let isMatch = true; // Supaya tampil hijau (karena secara uang dia Valid)
+                                let isMatch = false; // Anggap tidak valid karena info asalnya belum lengkap
 
-                                if (aio.textClean.includes('SHOPEE')) {
+                                if (aioTextClean.includes('SHOPEE')) {
                                     platform = 'Shopee';
                                     store = 'Shopee (Tdk Terdeteksi Toko)';
-                                } else if (aio.textClean.includes('TOKOPEDIA') || aio.textClean.includes('TOKOPED') || aio.textClean.includes('TIKTOK')) {
+                                } else if (aioTextClean.includes('TOKOPEDIA') || aioTextClean.includes('TOKOPED') || aioTextClean.includes('TIKTOK')) {
                                     platform = 'Tokopedia';
                                     store = 'Tokopedia (Tdk Terdeteksi Toko)';
-                                } else if (aio.textClean.includes('ONLINEMANUAL') || aio.textClean.includes('MANUAL')) {
+                                } else if (aioTextClean.includes('ONLINEMANUAL') || aioTextClean.includes('MANUAL')) {
                                     platform = 'Online Manual';
                                     store = 'Data 5 (AIO)';
+                                    isMatch = true; // Kalo manual, itu emang sah
                                 }
 
                                 finalResults.push({
@@ -787,16 +773,42 @@
                                     platform: platform,
                                     store: store,
                                     delivery: '-',
+                                    deliveryCategory: 'Manual/Lainnya',
                                     isMatch: isMatch, 
                                     date: aio.date,
                                     dateObj: aio.dateObj,
                                     rawNominal: aio.rawNominal,
                                     numericNominal: aio.numericNominal,
-                                    deliveryCategory: 'Manual/Lainnya',
-                                    isAioData: true, // Pasti dihitung uangnya
-                                    isDuplicate: false
+                                    isAioData: true // Status: VALID AIO
                                 });
                             }
+                        });
+
+                        // LANGKAH 3: CARI PESANAN MP YANG BELUM MASUK/DICAIRKAN KE DATA 5
+                        // (Tetap hapus duplikat baris MP agar tampilannya rapi, tidak muncul 5 baris)
+                        const mpSisaKamus = new Map();
+                        mpKamus.forEach(mp => {
+                            if (!kamusYgTerpakai.has(mp.orderIdClean)) {
+                                if (!mpSisaKamus.has(mp.orderIdClean)) {
+                                    mpSisaKamus.set(mp.orderIdClean, mp);
+                                }
+                            }
+                        });
+
+                        mpSisaKamus.forEach(mp => {
+                            finalResults.push({
+                                orderId: mp.orderId,
+                                platform: mp.platform,
+                                store: mp.store,
+                                delivery: mp.delivery,
+                                deliveryCategory: classifyDelivery(mp.delivery, mp.platform),
+                                isMatch: false,
+                                date: '-',
+                                dateObj: null,
+                                rawNominal: '-',
+                                numericNominal: 0, // 0 Karena uang belum masuk ke AIO
+                                isAioData: false // Status: BELUM MASUK AIO
+                            });
                         });
 
                         if (finalResults.length === 0) {
@@ -839,16 +851,14 @@
 
                 const filteredData = results.filter(r => {
                     let passStatus = true;
-                    // Yang "Cocok" adalah yg Match sejati atau Duplicate, yg tidak ya !isMatch
-                    if (filterStatus === 'matched') passStatus = r.isMatch;
-                    if (filterStatus === 'unmatched') passStatus = !r.isMatch;
+                    if (filterStatus === 'matched') passStatus = r.isAioData; 
+                    if (filterStatus === 'unmatched') passStatus = !r.isAioData;
                     
                     let passPlatform = true;
                     if (filterPlatform !== 'all') passPlatform = r.platform === filterPlatform;
 
                     let passTime = true;
                     if (filterMonth !== 'all' || startObj || endObj) {
-                        // Khusus filter waktu, jika tdk punya tgl AIO, kita sembunyikan sementara
                         if (!r.dateObj) {
                             passTime = false; 
                         } else {
@@ -871,18 +881,12 @@
             };
 
             const updateSummaryCards = (filteredData) => {
-                // Total Baris murni berdasarkan data tabel
-                const totalBaris = filteredData.length;
+                const totalAIO = filteredData.filter(r => r.isAioData).length; 
+                const unmatched = filteredData.filter(r => !r.isAioData).length;
                 
-                // Total transaksi Real AIO = Hanya isAioData (Mencegah item duplicate kehitung double)
-                const validAioCount = filteredData.filter(r => r.isAioData).length; 
-                
-                // Unmatched = MP yg tidak ada di AIO sama sekali
-                const unmatchedCount = filteredData.filter(r => !r.isMatch).length;
-                
-                elements.counts.total.textContent = totalBaris;
-                elements.counts.matched.textContent = validAioCount;
-                elements.counts.unmatched.textContent = unmatchedCount;
+                elements.counts.total.textContent = filteredData.length;
+                elements.counts.matched.textContent = totalAIO;
+                elements.counts.unmatched.textContent = unmatched;
             };
 
             // --- Modal Logic ---
@@ -891,6 +895,7 @@
                 let iconClass = 'fa-list';
                 let iconColor = 'text-blue-500';
 
+                // Chart modals (type: store/delivery) HANYA menerima isAioData === true 
                 if (type === 'store') {
                     iconClass = 'fa-store';
                     if (label === 'Shopee Balistationery') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'Bali Stationery' && d.isAioData);
@@ -913,7 +918,7 @@
                         iconClass = 'fa-check-circle';
                         iconColor = 'text-green-600';
                     } else if (label === 'Data Tidak Cocok') {
-                        filteredData = allData.filter(d => !d.isMatch);
+                        filteredData = allData.filter(d => !d.isAioData);
                         iconClass = 'fa-times-circle';
                         iconColor = 'text-red-600';
                     }
@@ -953,8 +958,7 @@
 
             // --- Chart Generation ---
             const updateChart = (data) => {
-                // CHART HANYA MENGGUNAKAN DATA AIO VALID MURNI
-                const chartAioData = data.filter(d => d.isAioData);
+                const chartAioData = data.filter(d => d.isAioData); // HANYA PAKE AIO CHARTNYA
 
                 const ctxStore = document.getElementById('marketplaceChart').getContext('2d');
                 const ctxDelivery = document.getElementById('deliveryChart').getContext('2d');
@@ -1132,14 +1136,9 @@
                         platformBadge = '<span class="px-3 py-1 text-xs font-extrabold rounded-md bg-blue-500 text-white shadow-sm border border-blue-600">MANUAL</span>';
                     }
                     
-                    let statusBadge = '';
-                    if (row.isAioData) {
-                        statusBadge = '<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200"><i class="fas fa-check-circle"></i> Valid AIO</span>';
-                    } else if (row.isDuplicate) {
-                        statusBadge = '<span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold border border-blue-200"><i class="fas fa-copy"></i> Item Gabungan</span>';
-                    } else {
-                        statusBadge = '<span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200"><i class="fas fa-times-circle"></i> Tdk Ada di AIO</span>';
-                    }
+                    const statusBadge = row.isAioData
+                        ? '<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200"><i class="fas fa-check-circle"></i> Valid AIO</span>'
+                        : '<span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200"><i class="fas fa-times-circle"></i> Belum Masuk AIO</span>';
 
                     return `
                         <tr class="hover:bg-gray-50 transition-colors">
@@ -1329,23 +1328,16 @@
                     };
                 });
 
-                const detailRows = filteredData.map(r => {
-                    let ket = '';
-                    if (r.isAioData) ket = 'Utama (Valid)';
-                    else if (r.isDuplicate) ket = 'Item Gabungan';
-                    else ket = 'Tidak Cocok (Sisa)';
-
-                    return {
-                        "No Pemesanan": r.orderId,
-                        "Tgl Asli (AIO)": r.date,
-                        "Platform": r.platform,
-                        "Toko": r.store,
-                        "Layanan Pengiriman": r.delivery,
-                        "Kategori Layanan": r.deliveryCategory,
-                        "Nominal AIO": r.numericNominal || 0,
-                        "Keterangan": ket
-                    };
-                });
+                const detailRows = filteredData.map(r => ({
+                    "No Pemesanan": r.orderId,
+                    "Tgl Asli (AIO)": r.date,
+                    "Platform": r.platform,
+                    "Toko": r.store,
+                    "Layanan Pengiriman": r.delivery,
+                    "Kategori Layanan": r.deliveryCategory,
+                    "Nominal AIO": r.numericNominal || 0,
+                    "Status Data": r.isAioData ? 'Valid AIO' : 'Belum Masuk AIO'
+                }));
 
                 const wb = window.XLSX.utils.book_new();
                 const wsSummary = window.XLSX.utils.json_to_sheet(summaryRows);
