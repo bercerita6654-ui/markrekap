@@ -162,8 +162,8 @@
                     <p class="text-sm text-blue-700 mb-5">Upload file AIO yang berisi mutasi/penjualan. Data ini adalah ACUAN UTAMA perhitungan uang dan Qty.</p>
                     <label class="cursor-pointer flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold transition-colors shadow-md w-full max-w-sm">
                         <i class="fas fa-upload"></i>
-                        <span id="label-aio" class="truncate max-w-[200px]">Pilih File Data AIO .xlsx</span>
-                        <input type="file" id="file-aio" accept=".xlsx" class="hidden" />
+                        <span id="label-aio" class="truncate max-w-[200px]">Pilih File Data AIO .xlsx/csv</span>
+                        <input type="file" id="file-aio" accept=".xlsx,.csv" class="hidden" />
                     </label>
                     <div id="check-aio" class="hidden-section absolute top-4 right-4 text-green-500 bg-white rounded-full">
                         <i class="fas fa-check-circle text-3xl"></i>
@@ -448,7 +448,7 @@
                 return val;
             };
 
-            // PARSER NUMBER PALING ROBUST (Tahan koma, tahan titik desimal, tahan string Rp)
+            // PARSER NUMBER
             const parseNominal = (val) => {
                 if (typeof val === 'number') return Math.round(val);
                 if (!val || val === '-') return 0;
@@ -456,13 +456,12 @@
                 let str = String(val).trim();
                 let isNegative = str.includes('-') || (str.includes('(') && str.includes(')'));
                 
-                // Menghilangkan "Rp" dan spasi
                 str = str.replace(/Rp/ig, '').replace(/\s/g, '');
                 
-                // Jika berakhiran ,00 atau .00 (atau .50 dll sebanyak 2 digit), hapus ekornya
-                str = str.replace(/[,.]\d{1,2}$/, '');
+                if (/(,|\.)\d{1,2}$/.test(str)) {
+                    str = str.replace(/(,|\.)\d{1,2}$/, '');
+                }
                 
-                // Hapus semua karakter yang BUKAN angka murni
                 str = str.replace(/\D/g, ''); 
                 
                 let num = parseInt(str, 10);
@@ -476,7 +475,7 @@
                 if (typeof val === 'string') {
                     const s = val.trim();
                     const m = s.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-                    if (m) {
+                    if (m && !s.match(/[a-zA-Z]/)) {
                         const d = m[1].padStart(2, '0');
                         const mo = m[2].padStart(2, '0');
                         let y = m[3];
@@ -500,13 +499,30 @@
                 if (!dateStr || dateStr === '-') return null;
                 let s = String(dateStr).trim();
                 
+                const dMatch = s.match(/^(\d{1,2})\s+([a-zA-Z]{3})\s+(\d{4})/i);
+                if (dMatch) {
+                    const d = parseInt(dMatch[1], 10);
+                    const y = parseInt(dMatch[3], 10);
+                    const mStr = dMatch[2].toLowerCase();
+                    const months = { jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11, agu:7, okt:9, nop:10, des:11 };
+                    let mo = months[mStr];
+                    if (mo !== undefined) return new Date(y, mo, d);
+                }
+
                 let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
                 if (m) {
-                    let d = parseInt(m[1], 10);
-                    let mo = parseInt(m[2], 10) - 1; 
-                    let y = parseInt(m[3], 10);
-                    if (y < 100) y += 2000;
-                    return new Date(y, mo, d);
+                    if (m[1].length === 4) {
+                        let y = parseInt(m[1], 10);
+                        let mo = parseInt(m[2], 10) - 1; 
+                        let d = parseInt(m[3], 10);
+                        return new Date(y, mo, d);
+                    } else {
+                        let d = parseInt(m[1], 10);
+                        let mo = parseInt(m[2], 10) - 1; 
+                        let y = parseInt(m[3], 10);
+                        if (y < 100) y += 2000;
+                        return new Date(y, mo, d);
+                    }
                 }
                 
                 m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
@@ -583,7 +599,6 @@
                             const data = new Uint8Array(e.target.result);
                             const workbook = window.XLSX.read(data, { type: 'array' });
                             const firstSheet = workbook.SheetNames[0];
-                            // FORCE RAW: FALSE agar no order tokopedia tidak terpotong (presisi 18 digit)
                             const sheetData = window.XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1, raw: false, defval: "" });
                             resolve(sheetData);
                         } catch (err) {
@@ -623,21 +638,48 @@
 
             const processAIO = (data) => {
                 const results = [];
+                // Data 5: 0=Nota, 1=Tanggal, 2=No Pemesanan, 3=Nama Toko, 4=Sales, 5=Nominal
                 for (let i = 1; i < data.length; i++) {
                     const row = data[i];
                     if (!row || row.length === 0) continue;
                     
                     const rawDate = row[1]; 
                     const dateInfo = formatExcelDate(rawDate); 
-                    const text = String(row[2] || '').trim(); 
-                    const rawNominal = row[4]; 
+                    
+                    const orderId = String(row[2] || '').trim(); 
+                    let storeName = String(row[3] || '').trim(); // INI NAMA TOKO ACUAN
+                    
+                    // --- PENGELOMPOKKAN OTOMATIS NAMA TOKO (NORMALISASI) ---
+                    const storeUpper = storeName.toUpperCase();
+                    if (storeUpper.includes('ONLINE TIKTOK TOKOPEDIA BALIST')) {
+                        storeName = 'ONLINE TIKTOK TOKOPEDIA BALIST';
+                    } else if (storeUpper.includes('ONLINE TIKTOK TOKOPEDIA GOMALL')) {
+                        storeName = 'ONLINE TIKTOK TOKOPEDIA GOMALL';
+                    } else if (storeUpper.includes('ONLINE SHOPEE')) {
+                        storeName = 'ONLINE SHOPEE';
+                    } else if (storeUpper.includes('ONLINE TOKOPEDIA BALIST')) {
+                        storeName = 'ONLINE TOKOPEDIA BALIST';
+                    } else if (storeUpper.includes('ONLINE TOKOPEDIA GOMALL')) {
+                        storeName = 'ONLINE TOKOPEDIA GOMALL';
+                    }
+                    // Jika tidak masuk daftar di atas, nama toko akan dibiarkan aslinya
+
+                    const rawNominal = row[5]; 
+                    
                     const numericNominal = parseNominal(rawNominal); 
                     
-                    // Semua baris Data 5 yang ada isinya kita rekap sebagai master utama
-                    if (text && numericNominal !== 0) {
-                        const textClean = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                    if ((orderId || storeName) && numericNominal !== 0) {
+                        const textClean = orderId.toUpperCase().replace(/[^A-Z0-9]/g, '');
                         const dateObj = parseDateStr(dateInfo);
-                        results.push({ text, textClean, date: dateInfo, dateObj, rawNominal, numericNominal });
+                        results.push({ 
+                            text: orderId, 
+                            storeNameAio: storeName, // DISIMPAN DISINI SUDAH BERSIH & TERKELOMPOK
+                            textClean, 
+                            date: dateInfo, 
+                            dateObj, 
+                            rawNominal, 
+                            numericNominal 
+                        });
                     }
                 }
                 return results;
@@ -713,7 +755,7 @@
                         if (data3.length) rawCombinedOrders = rawCombinedOrders.concat(processTokopedia(data3, 'Bali Stationery'));
                         if (data4.length) rawCombinedOrders = rawCombinedOrders.concat(processTokopedia(data4, 'GoMall'));
 
-                        // LANGKAH 1: Buat KAMUS PENGIRIMAN dari Data 1-4 (Dibuang Duplikatnya)
+                        // KAMUS PENGIRIMAN
                         const mpKamus = [];
                         rawCombinedOrders.forEach(order => {
                             const orderIdClean = order.orderId.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -721,26 +763,30 @@
                                 mpKamus.push({ ...order, orderIdClean });
                             }
                         });
-                        // Urutkan dari yang terpanjang agar pencarian Teks AIO lebih akurat
                         mpKamus.sort((a, b) => b.orderIdClean.length - a.orderIdClean.length);
 
                         const aioRecords = processAIO(data5);
                         const finalResults = [];
                         const kamusYgTerpakai = new Set();
                         
-                        // LANGKAH 2: LOOP MASTER DARI DATA 5 (AIO) - Jumlah Transaksi MURNI AIO!
+                        // LOOP UTAMA DARI DATA 5 (AIO = MASTER)
                         aioRecords.forEach(aio => {
                             const aioTextClean = aio.textClean;
                             
-                            // Cari di Kamus MP
-                            const matchedMp = mpKamus.find(mp => aioTextClean.includes(mp.orderIdClean));
+                            let matchedMp = null;
+                            if (aioTextClean.length > 3) {
+                                matchedMp = mpKamus.find(mp => aioTextClean.includes(mp.orderIdClean) || mp.orderIdClean.includes(aioTextClean));
+                            }
+
+                            // KUNCI UTAMA: SELALU GUNAKAN NAMA TOKO DARI KOLOM 4 DATA 5
+                            const finalStoreName = aio.storeNameAio ? aio.storeNameAio : 'Tidak Diketahui';
 
                             if (matchedMp) {
                                 kamusYgTerpakai.add(matchedMp.orderIdClean);
                                 finalResults.push({
-                                    orderId: matchedMp.orderId, // Ambil no pesanan bersih dari MP
+                                    orderId: aio.text || matchedMp.orderId,
                                     platform: matchedMp.platform,
-                                    store: matchedMp.store,
+                                    store: finalStoreName, // GUNAKAN DATA DARI AIO
                                     delivery: matchedMp.delivery,
                                     deliveryCategory: classifyDelivery(matchedMp.delivery, matchedMp.platform),
                                     isMatch: true, 
@@ -748,30 +794,28 @@
                                     dateObj: aio.dateObj,
                                     rawNominal: aio.rawNominal,
                                     numericNominal: aio.numericNominal,
-                                    isAioData: true // Status: VALID AIO
+                                    isAioData: true 
                                 });
                             } else {
-                                // AIO tidak menemukan informasi pesanan di kamus (Manual / Lupa diupload)
+                                // Manual atau Lupa Upload MP
                                 let platform = 'Tidak Diketahui';
-                                let store = 'Data 5 (AIO)';
-                                let isMatch = false; // Anggap tidak valid karena info asalnya belum lengkap
+                                let isMatch = false; 
+                                
+                                const aioStoreUpper = finalStoreName.toUpperCase();
 
-                                if (aioTextClean.includes('SHOPEE')) {
+                                if (aioStoreUpper.includes('SHOPEE') || aioTextClean.includes('SHOPEE')) {
                                     platform = 'Shopee';
-                                    store = 'Shopee (Tdk Terdeteksi Toko)';
-                                } else if (aioTextClean.includes('TOKOPEDIA') || aioTextClean.includes('TOKOPED') || aioTextClean.includes('TIKTOK')) {
+                                } else if (aioStoreUpper.includes('TOKOPEDIA') || aioStoreUpper.includes('TOKOPED') || aioStoreUpper.includes('TIKTOK') || aioTextClean.includes('TOKOPEDIA')) {
                                     platform = 'Tokopedia';
-                                    store = 'Tokopedia (Tdk Terdeteksi Toko)';
-                                } else if (aioTextClean.includes('ONLINEMANUAL') || aioTextClean.includes('MANUAL')) {
+                                } else if (aioStoreUpper.includes('MANUAL') || aioTextClean.includes('MANUAL')) {
                                     platform = 'Online Manual';
-                                    store = 'Data 5 (AIO)';
-                                    isMatch = true; // Kalo manual, itu emang sah
+                                    isMatch = true; 
                                 }
 
                                 finalResults.push({
-                                    orderId: aio.text, 
+                                    orderId: aio.text || '-', 
                                     platform: platform,
-                                    store: store,
+                                    store: finalStoreName, // GUNAKAN DATA DARI AIO
                                     delivery: '-',
                                     deliveryCategory: 'Manual/Lainnya',
                                     isMatch: isMatch, 
@@ -779,13 +823,12 @@
                                     dateObj: aio.dateObj,
                                     rawNominal: aio.rawNominal,
                                     numericNominal: aio.numericNominal,
-                                    isAioData: true // Status: VALID AIO
+                                    isAioData: true 
                                 });
                             }
                         });
 
-                        // LANGKAH 3: CARI PESANAN MP YANG BELUM MASUK/DICAIRKAN KE DATA 5
-                        // (Tetap hapus duplikat baris MP agar tampilannya rapi, tidak muncul 5 baris)
+                        // LOOP KEDUA: SISA MP (BUKAN AIO)
                         const mpSisaKamus = new Map();
                         mpKamus.forEach(mp => {
                             if (!kamusYgTerpakai.has(mp.orderIdClean)) {
@@ -799,15 +842,15 @@
                             finalResults.push({
                                 orderId: mp.orderId,
                                 platform: mp.platform,
-                                store: mp.store,
+                                store: mp.store, // Pake nama toko dari MP asal krn tdk ada di AIO
                                 delivery: mp.delivery,
                                 deliveryCategory: classifyDelivery(mp.delivery, mp.platform),
                                 isMatch: false,
                                 date: '-',
                                 dateObj: null,
                                 rawNominal: '-',
-                                numericNominal: 0, // 0 Karena uang belum masuk ke AIO
-                                isAioData: false // Status: BELUM MASUK AIO
+                                numericNominal: 0, 
+                                isAioData: false 
                             });
                         });
 
@@ -895,16 +938,9 @@
                 let iconClass = 'fa-list';
                 let iconColor = 'text-blue-500';
 
-                // Chart modals (type: store/delivery) HANYA menerima isAioData === true 
                 if (type === 'store') {
                     iconClass = 'fa-store';
-                    if (label === 'Shopee Balistationery') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'Bali Stationery' && d.isAioData);
-                    else if (label === 'Shopee Gomall') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'GoMall' && d.isAioData);
-                    else if (label === 'Shopee (Lainnya)') filteredData = allData.filter(d => d.platform === 'Shopee' && d.store === 'Shopee (Tdk Terdeteksi Toko)' && d.isAioData);
-                    else if (label === 'Toped Balistationery') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'Bali Stationery' && d.isAioData);
-                    else if (label === 'Toped Gomall') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'GoMall' && d.isAioData);
-                    else if (label === 'Toped (Lainnya)') filteredData = allData.filter(d => d.platform === 'Tokopedia' && d.store === 'Tokopedia (Tdk Terdeteksi Toko)' && d.isAioData);
-                    else if (label === 'Online Manual') filteredData = allData.filter(d => (d.platform === 'Online Manual' || d.platform === 'Tidak Diketahui') && d.isAioData);
+                    filteredData = allData.filter(d => d.store === label && d.isAioData);
                 } else if (type === 'delivery') {
                     iconClass = 'fa-truck';
                     filteredData = allData.filter(d => d.deliveryCategory === label && d.isAioData); 
@@ -956,26 +992,63 @@
                 }
             });
 
-            // --- Chart Generation ---
+            // --- Chart Generation (SANGAT DINAMIS BERDASARKAN DATA 5) ---
             const updateChart = (data) => {
-                const chartAioData = data.filter(d => d.isAioData); // HANYA PAKE AIO CHARTNYA
+                const chartAioData = data.filter(d => d.isAioData); 
 
                 const ctxStore = document.getElementById('marketplaceChart').getContext('2d');
                 const ctxDelivery = document.getElementById('deliveryChart').getContext('2d');
                 
-                const aggregateStore = (platform, store) => {
-                    let filtered;
-                    if (platform === 'Online Manual') {
-                        filtered = chartAioData.filter(d => d.platform === 'Online Manual' || d.platform === 'Tidak Diketahui');
-                    } else {
-                        filtered = chartAioData.filter(d => d.platform === platform && d.store === store);
+                // MENGOMPOKKAN NAMA TOKO SECARA BEBAS & OTOMATIS
+                const storeGroups = {};
+                chartAioData.forEach(d => {
+                    const sName = d.store || 'Tidak Diketahui';
+                    if (!storeGroups[sName]) {
+                        storeGroups[sName] = { count: 0, nominal: 0 };
                     }
-                    return {
-                        count: filtered.length,
-                        nominal: filtered.reduce((sum, d) => sum + (d.numericNominal || 0), 0)
-                    };
-                };
+                    storeGroups[sName].count++;
+                    storeGroups[sName].nominal += (d.numericNominal || 0);
+                });
 
+                const storeLabels = [];
+                const storeCounts = [];
+                const storeNominals = [];
+                const storeColors = [];
+                
+                let legendHtml = '';
+                const colorMap = ['#ea580c', '#16a34a', '#3b82f6', '#eab308', '#a855f7', '#ec4899', '#14b8a6', '#f97316', '#22c55e', '#0ea5e9'];
+                let cIdx = 0;
+
+                // Urutkan dari nominal terbesar agar grafik tampil cantik
+                const sortedStores = Object.entries(storeGroups).sort((a, b) => b[1].nominal - a[1].nominal);
+
+                for (const [sName, info] of sortedStores) {
+                    storeLabels.push(sName);
+                    storeCounts.push(info.count);
+                    storeNominals.push(info.nominal);
+                    
+                    let color = colorMap[cIdx % colorMap.length];
+                    
+                    // Sedikit logika pintar agar warna mirip dengan aslinya (Shopee=Oren, Toped=Hijau)
+                    const sUpper = sName.toUpperCase();
+                    if (cIdx < 3) {
+                        if (sUpper.includes('SHOPEE')) color = '#ea580c';
+                        else if (sUpper.includes('TOKOPEDIA') || sUpper.includes('TIKTOK')) color = '#16a34a';
+                        else if (sUpper.includes('MANUAL')) color = '#2563eb';
+                    }
+                    
+                    storeColors.push(color);
+
+                    legendHtml += `<div class="flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-100 mb-1">
+                        <span><i class="fas fa-circle text-[8px] mr-1" style="color:${color}"></i> ${sName}</span>
+                        <span class="text-right"><b>${info.count}</b> trx<br><span class="text-gray-600">${formatCurrency(info.nominal)}</span></span>
+                    </div>`;
+                    cIdx++;
+                }
+
+                document.getElementById('legend-marketplace').innerHTML = legendHtml;
+
+                // Delivery Chart Tetap Manual
                 const aggregateDelivery = (category) => {
                     const filtered = chartAioData.filter(d => d.deliveryCategory === category);
                     return {
@@ -984,43 +1057,20 @@
                     };
                 };
 
-                const sBali = aggregateStore('Shopee', 'Bali Stationery');
-                const sGo = aggregateStore('Shopee', 'GoMall');
-                const sUnk = aggregateStore('Shopee', 'Shopee (Tdk Terdeteksi Toko)');
-                
-                const tBali = aggregateStore('Tokopedia', 'Bali Stationery');
-                const tGo = aggregateStore('Tokopedia', 'GoMall');
-                const tUnk = aggregateStore('Tokopedia', 'Tokopedia (Tdk Terdeteksi Toko)');
-                
-                const manual = aggregateStore('Online Manual', null);
-
                 const instan = aggregateDelivery('Instan');
                 const reguler = aggregateDelivery('Reguler');
                 const manualDeliv = aggregateDelivery('Manual/Lainnya');
 
-                let legendHtml = '';
-                if(sBali.count > 0) legendHtml += `<div class="flex justify-between items-center bg-orange-50 p-2 rounded text-orange-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#ea580c]"></i> Shopee BaliSt</span><span class="text-right"><b>${sBali.count}</b> trx<br><span class="text-orange-600">${formatCurrency(sBali.nominal)}</span></span></div>`;
-                if(sGo.count > 0) legendHtml += `<div class="flex justify-between items-center bg-orange-50/50 p-2 rounded text-orange-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#fb923c]"></i> Shopee Gomall</span><span class="text-right"><b>${sGo.count}</b> trx<br><span class="text-orange-600">${formatCurrency(sGo.nominal)}</span></span></div>`;
-                if(sUnk.count > 0) legendHtml += `<div class="flex justify-between items-center bg-orange-100 p-2 rounded text-orange-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#fdba74]"></i> Shopee (Lainnya)</span><span class="text-right"><b>${sUnk.count}</b> trx<br><span class="text-orange-600">${formatCurrency(sUnk.nominal)}</span></span></div>`;
-                
-                if(tBali.count > 0) legendHtml += `<div class="flex justify-between items-center bg-green-50 p-2 rounded text-green-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#16a34a]"></i> Toped BaliSt</span><span class="text-right"><b>${tBali.count}</b> trx<br><span class="text-green-600">${formatCurrency(tBali.nominal)}</span></span></div>`;
-                if(tGo.count > 0) legendHtml += `<div class="flex justify-between items-center bg-green-50/50 p-2 rounded text-green-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#4ade80]"></i> Toped Gomall</span><span class="text-right"><b>${tGo.count}</b> trx<br><span class="text-green-600">${formatCurrency(tGo.nominal)}</span></span></div>`;
-                if(tUnk.count > 0) legendHtml += `<div class="flex justify-between items-center bg-green-100 p-2 rounded text-green-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#86efac]"></i> Toped (Lainnya)</span><span class="text-right"><b>${tUnk.count}</b> trx<br><span class="text-green-600">${formatCurrency(tUnk.nominal)}</span></span></div>`;
-                
-                if(manual.count > 0) legendHtml += `<div class="flex justify-between items-center bg-blue-50 p-2 rounded text-blue-800"><span><i class="fas fa-circle text-[8px] mr-1 text-[#3b82f6]"></i> Online Manual</span><span class="text-right"><b>${manual.count}</b> trx<br><span class="text-blue-600">${formatCurrency(manual.nominal)}</span></span></div>`;
-                
-                document.getElementById('legend-marketplace').innerHTML = legendHtml;
-
                 document.getElementById('legend-delivery').innerHTML = `
-                    <div class="flex justify-between items-center bg-red-50 p-2 rounded text-red-800">
+                    <div class="flex justify-between items-center bg-red-50 p-2 rounded text-red-800 border border-red-100 mb-1">
                         <span><i class="fas fa-circle text-[8px] mr-1 text-[#ef4444]"></i> Instan</span> 
                         <span class="text-right"><b>${instan.count}</b> trx<br><span class="text-red-600">${formatCurrency(instan.nominal)}</span></span>
                     </div>
-                    <div class="flex justify-between items-center bg-yellow-50 p-2 rounded text-yellow-800">
+                    <div class="flex justify-between items-center bg-yellow-50 p-2 rounded text-yellow-800 border border-yellow-100 mb-1">
                         <span><i class="fas fa-circle text-[8px] mr-1 text-[#eab308]"></i> Reguler</span> 
                         <span class="text-right"><b>${reguler.count}</b> trx<br><span class="text-yellow-600">${formatCurrency(reguler.nominal)}</span></span>
                     </div>
-                    <div class="flex justify-between items-center bg-gray-100 p-2 rounded text-gray-700">
+                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded text-gray-700 border border-gray-100">
                         <span><i class="fas fa-circle text-[8px] mr-1 text-[#9ca3af]"></i> Manual / Lainnya</span> 
                         <span class="text-right"><b>${manualDeliv.count}</b> trx<br><span class="text-gray-500">${formatCurrency(manualDeliv.nominal)}</span></span>
                     </div>
@@ -1044,11 +1094,11 @@
                 chartInstanceStore = new Chart(ctxStore, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Shopee Balistationery', 'Shopee Gomall', 'Shopee (Lainnya)', 'Toped Balistationery', 'Toped Gomall', 'Toped (Lainnya)', 'Online Manual'],
+                        labels: storeLabels,
                         datasets: [{
-                            data: [sBali.count, sGo.count, sUnk.count, tBali.count, tGo.count, tUnk.count, manual.count],
-                            nominals: [sBali.nominal, sGo.nominal, sUnk.nominal, tBali.nominal, tGo.nominal, tUnk.nominal, manual.nominal],
-                            backgroundColor: ['#ea580c', '#fb923c', '#fdba74', '#16a34a', '#4ade80', '#86efac', '#3b82f6'],
+                            data: storeCounts,
+                            nominals: storeNominals,
+                            backgroundColor: storeColors,
                             borderWidth: 2,
                             borderColor: '#ffffff',
                             hoverOffset: 4
