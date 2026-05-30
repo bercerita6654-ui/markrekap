@@ -662,10 +662,8 @@
                     } else if (storeUpper.includes('ONLINE TOKOPEDIA GOMALL')) {
                         storeName = 'ONLINE TOKOPEDIA GOMALL';
                     }
-                    // Jika tidak masuk daftar di atas, nama toko akan dibiarkan aslinya
 
                     const rawNominal = row[5]; 
-                    
                     const numericNominal = parseNominal(rawNominal); 
                     
                     if ((orderId || storeName) && numericNominal !== 0) {
@@ -673,7 +671,7 @@
                         const dateObj = parseDateStr(dateInfo);
                         results.push({ 
                             text: orderId, 
-                            storeNameAio: storeName, // DISIMPAN DISINI SUDAH BERSIH & TERKELOMPOK
+                            storeNameAio: storeName,
                             textClean, 
                             date: dateInfo, 
                             dateObj, 
@@ -686,15 +684,18 @@
             };
 
             const classifyDelivery = (delivery, platform) => {
-                if (!delivery || delivery === '-' || platform === 'Online Manual' || platform === 'Tidak Diketahui') return 'Manual/Lainnya';
+                if (platform === 'Online Manual' || platform === 'Tidak Diketahui') return 'Manual/Lainnya';
+                if (!delivery || delivery === '-') return 'Reguler'; // Jika dari MP tapi pengiriman kosong, otomatis Reguler
+                
                 const del = delivery.toLowerCase();
-                if (del.includes('instant') || del.includes('instan')) {
+                
+                // Deteksi Instan secara spesifik dan luas
+                if (del.includes('instan') || del.includes('gosend') || del.includes('go-send') || del.includes('go send') || del.includes('grab') || del.includes('same day') || del.includes('sameday')) {
                     return 'Instan';
                 }
-                if (del.includes('reguler') || del.includes('hemat') || del.includes('standard') || del.includes('standar') || del.includes('kargo') || del.includes('jne') || del.includes('j&t') || del.includes('id express')) {
-                    return 'Reguler';
-                }
-                return 'Manual/Lainnya';
+                
+                // Jika dari Shopee/Tokopedia tapi tidak terdeteksi Instan, berarti masuk Reguler
+                return 'Reguler';
             };
 
             const populateMonthDropdown = (data) => {
